@@ -263,10 +263,50 @@ const BlogManagement = () => {
                   <Textarea
                     value={formData.content}
                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    placeholder="Write your article content here..."
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      const pastedText = e.clipboardData.getData('text/html') || e.clipboardData.getData('text/plain');
+                      
+                      // Convert HTML to markdown-style formatting
+                      let formattedText = pastedText
+                        .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1')
+                        .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1')
+                        .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1')
+                        .replace(/<h4[^>]*>(.*?)<\/h4>/gi, '#### $1')
+                        .replace(/<h5[^>]*>(.*?)<\/h5>/gi, '##### $1')
+                        .replace(/<h6[^>]*>(.*?)<\/h6>/gi, '###### $1')
+                        .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')
+                        .replace(/<br\s*\/?>/gi, '\n')
+                        .replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**')
+                        .replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**')
+                        .replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*')
+                        .replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
+                        .replace(/<ul[^>]*>(.*?)<\/ul>/gis, (match, content) => {
+                          return content.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n');
+                        })
+                        .replace(/<ol[^>]*>(.*?)<\/ol>/gis, (match, content) => {
+                          let counter = 1;
+                          return content.replace(/<li[^>]*>(.*?)<\/li>/gi, () => `${counter++}. $1\n`);
+                        })
+                        .replace(/<[^>]*>/g, '') // Remove remaining HTML tags
+                        .replace(/\n\s*\n\s*\n/g, '\n\n') // Clean up multiple newlines
+                        .trim();
+
+                      const currentContent = formData.content;
+                      const textarea = e.target as HTMLTextAreaElement;
+                      const start = textarea.selectionStart;
+                      const end = textarea.selectionEnd;
+                      
+                      const newContent = currentContent.substring(0, start) + formattedText + currentContent.substring(end);
+                      setFormData({ ...formData, content: newContent });
+                    }}
+                    placeholder="Write your article content here. You can paste rich text and it will be converted to proper formatting."
                     className="min-h-[300px]"
                     required
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Supports: # Headings, **bold**, *italic*, - bullet lists, 1. numbered lists
+                  </p>
                 </div>
 
                 <div className="flex gap-4">

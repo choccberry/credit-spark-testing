@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { Article } from '@/types';
-import { Plus, Edit, Trash2, ArrowLeft, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, ArrowLeft, Eye, Shield } from 'lucide-react';
 
 const BlogManagement = () => {
   const { authState } = useAuth();
@@ -27,8 +27,28 @@ const BlogManagement = () => {
     status: 'draft' as 'draft' | 'published'
   });
 
-  if (!authState.isAuthenticated || authState.user?.role !== 'admin') {
+  if (!authState.isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Simple admin check - in real app this would be more sophisticated
+  if (authState.user?.id !== 1) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md">
+          <CardContent className="text-center py-12">
+            <Shield className="h-16 w-16 mx-auto mb-4 text-destructive" />
+            <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+            <p className="text-muted-foreground mb-6">
+              You don't have permission to access the blog management panel.
+            </p>
+            <Button asChild>
+              <Link to="/dashboard">Return to Dashboard</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   useEffect(() => {

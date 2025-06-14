@@ -51,29 +51,34 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
       .replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*')
       .replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
       .replace(/<ul[^>]*>(.*?)<\/ul>/gis, (match, content) => {
-        return content.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n');
+        const items = content.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n');
+        return '\n' + items + '\n';
       })
       .replace(/<ol[^>]*>(.*?)<\/ol>/gis, (match, content) => {
         let counter = 1;
-        return content.replace(/<li[^>]*>(.*?)<\/li>/gi, () => `${counter++}. $1\n`);
+        const items = content.replace(/<li[^>]*>(.*?)<\/li>/gi, () => `${counter++}. $1\n`);
+        return '\n' + items + '\n';
       })
       .replace(/&rsquo;/g, "'")
       .replace(/&ldquo;/g, '"')
       .replace(/&rdquo;/g, '"')
       .replace(/&amp;/g, '&')
       .replace(/<[^>]*>/g, '') // Remove remaining HTML tags
-      // Clean up bold formatting in headings and normalize whitespace
+      // Clean up bold formatting in headings
       .replace(/###\s*\*\*(.*?)\*\*/g, '### $1')
       .replace(/####\s*\*\*(.*?)\*\*/g, '#### $1')
       .replace(/##\s*\*\*(.*?)\*\*/g, '## $1')
       .replace(/#\s*\*\*(.*?)\*\*/g, '# $1')
-      // Fix spacing around headings
+      // Fix spacing around headings - ensure proper breaks
       .replace(/([a-z.,!?])\s*(#{1,6})\s*([A-Z])/g, '$1\n\n$2 $3')
-      // Clean up excessive whitespace but preserve paragraph breaks
+      // Normalize whitespace but preserve structure
       .replace(/[ \t]+/g, ' ') // Multiple spaces/tabs to single space
       .replace(/\n[ \t]+/g, '\n') // Remove spaces after newlines
       .replace(/[ \t]+\n/g, '\n') // Remove spaces before newlines
-      .replace(/\n{3,}/g, '\n\n') // Multiple newlines to double newline
+      .replace(/\n{3,}/g, '\n\n') // Limit to max 2 newlines
+      // Fix list spacing - ensure lists have proper breaks but not excessive
+      .replace(/\n\n-/g, '\n\n-') // Keep double newline before lists
+      .replace(/\n\n(\d+\.)/g, '\n\n$1') // Keep double newline before numbered lists
       .trim();
 
     const currentContent = formData.content;

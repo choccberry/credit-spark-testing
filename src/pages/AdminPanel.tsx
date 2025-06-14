@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { mockCampaigns, mockUsers } from '@/data/mockData';
-import { ArrowLeft, Check, X, Shield, Settings, BookOpen } from 'lucide-react';
+import { ArrowLeft, Check, X, Shield, Settings, BookOpen, Globe } from 'lucide-react';
 
 const AdminPanel = () => {
   const { authState } = useAuth();
@@ -99,6 +99,12 @@ const AdminPanel = () => {
               <Link to="/admin/blog">
                 <BookOpen className="h-4 w-4 mr-2" />
                 Blog Management
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/admin/pages">
+                <Globe className="h-4 w-4 mr-2" />
+                Page Management
               </Link>
             </Button>
             <Button variant="outline" asChild>

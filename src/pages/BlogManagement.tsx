@@ -161,8 +161,8 @@ const BlogManagement = () => {
             <h1 className="text-2xl font-bold">Blog Management</h1>
           </div>
           <div className="flex items-center gap-4">
-            <Badge variant={publishedCount >= 30 ? "default" : "secondary"}>
-              {publishedCount}/30 Published Articles
+            <Badge variant="default">
+              {publishedCount} Published Articles
             </Badge>
             <Button onClick={() => setShowForm(true)}>
               <Plus className="h-4 w-4 mr-2" />

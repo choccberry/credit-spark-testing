@@ -16,6 +16,7 @@ import AdSenseSettings from "./pages/AdSenseSettings";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import BlogManagement from "./pages/BlogManagement";
+import PageManagement from "./pages/PageManagement";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import About from "./pages/About";
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/admin/adsense" element={<AdSenseSettings />} />
             <Route path="/admin/blog" element={<BlogManagement />} />
+            <Route path="/admin/pages" element={<PageManagement />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />

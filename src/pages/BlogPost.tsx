@@ -117,7 +117,12 @@ const BlogPost = () => {
                     return;
                   }
                   
-                  // Handle headings
+                  // Handle headings - check for multiple heading levels
+                  if (trimmedLine.startsWith('#### ')) {
+                    flushList();
+                    elements.push(<h4 key={index} className="text-lg font-semibold mt-6 mb-3">{trimmedLine.slice(5)}</h4>);
+                    return;
+                  }
                   if (trimmedLine.startsWith('### ')) {
                     flushList();
                     elements.push(<h3 key={index} className="text-xl font-semibold mt-8 mb-4">{trimmedLine.slice(4)}</h3>);
@@ -144,27 +149,34 @@ const BlogPost = () => {
                     return;
                   }
                   
-                  // Handle ordered lists
+                  // Handle ordered lists - preserve original numbering
                   if (/^\d+\.\s/.test(trimmedLine)) {
                     if (listType !== 'ol') {
                       flushList();
                       listType = 'ol';
                     }
-                    listItems.push(<li key={index}>{trimmedLine.replace(/^\d+\.\s/, '')}</li>);
+                    const match = trimmedLine.match(/^(\d+)\.\s(.*)$/);
+                    if (match) {
+                      const number = match[1];
+                      const text = match[2];
+                      listItems.push(<li key={index} value={parseInt(number)}>{text}</li>);
+                    }
                     return;
                   }
                   
                   // Regular paragraphs (flush lists first)
                   flushList();
                   
-                  // Handle bold text
-                  const boldText = trimmedLine.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                  // Handle bold and italic text
+                  let formattedText = trimmedLine
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>');
                   
                   elements.push(
                     <p 
                       key={index} 
                       className="mb-4 leading-relaxed" 
-                      dangerouslySetInnerHTML={{ __html: boldText }}
+                      dangerouslySetInnerHTML={{ __html: formattedText }}
                     />
                   );
                 });

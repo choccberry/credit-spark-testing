@@ -52,14 +52,14 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
       .replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
       // Handle unordered lists
       .replace(/<ul[^>]*>(.*?)<\/ul>/gis, (match, content) => {
-        const items = content.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1');
-        return '\n' + items + '\n';
+        const items = content.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n');
+        return '\n' + items;
       })
       // Handle ordered lists
       .replace(/<ol[^>]*>(.*?)<\/ol>/gis, (match, content) => {
         let counter = 1;
-        const items = content.replace(/<li[^>]*>(.*?)<\/li>/gi, () => `${counter++}. $1`);
-        return '\n' + items + '\n';
+        const items = content.replace(/<li[^>]*>(.*?)<\/li>/gi, () => `${counter++}. $1\n`);
+        return '\n' + items;
       })
       .replace(/&rsquo;/g, "'")
       .replace(/&ldquo;/g, '"')

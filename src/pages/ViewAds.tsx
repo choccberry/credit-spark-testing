@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import AdSenseAd from '@/components/AdSenseAd';
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -113,6 +114,8 @@ const ViewAds = () => {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
+        {/* Platform AdSense Ad */}
+        <AdSenseAd adType="viewAds" className="mb-8" />
         {currentAd ? (
           <Card className="max-w-2xl mx-auto">
             <CardHeader>

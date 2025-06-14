@@ -12,6 +12,7 @@ import ViewAds from "./pages/ViewAds";
 import CreateCampaign from "./pages/CreateCampaign";
 import MyCampaigns from "./pages/MyCampaigns";
 import AdminPanel from "./pages/AdminPanel";
+import AdSenseSettings from "./pages/AdSenseSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/create-campaign" element={<CreateCampaign />} />
             <Route path="/my-campaigns" element={<MyCampaigns />} />
             <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/admin/adsense" element={<AdSenseSettings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

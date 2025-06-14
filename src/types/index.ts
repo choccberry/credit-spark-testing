@@ -4,6 +4,7 @@ export interface User {
   email: string;
   creditBalance: number;
   createdAt: string;
+  role?: 'admin' | 'user';
 }
 
 export interface Campaign {

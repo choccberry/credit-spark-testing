@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { mockCampaigns, mockUsers } from '@/data/mockData';
-import { ArrowLeft, Check, X, Shield } from 'lucide-react';
+import { ArrowLeft, Check, X, Shield, Settings } from 'lucide-react';
 
 const AdminPanel = () => {
   const { authState } = useAuth();
@@ -95,6 +95,12 @@ const AdminPanel = () => {
       <header className="border-b border-border bg-card">
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
+            <Button variant="outline" asChild>
+              <Link to="/admin/adsense">
+                <Settings className="h-4 w-4 mr-2" />
+                AdSense Settings
+              </Link>
+            </Button>
             <Button variant="outline" size="sm" asChild>
               <Link to="/dashboard">
                 <ArrowLeft className="h-4 w-4 mr-2" />

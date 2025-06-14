@@ -17,7 +17,7 @@ const CreateCampaign = () => {
   const [campaignName, setCampaignName] = useState('');
   const [budget, setBudget] = useState('');
   const [targetUrl, setTargetUrl] = useState('');
-  const [adsenseCode, setAdsenseCode] = useState('');
+  
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -181,19 +181,6 @@ const CreateCampaign = () => {
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="adsenseCode">Google AdSense Code (Optional)</Label>
-                <Textarea
-                  id="adsenseCode"
-                  value={adsenseCode}
-                  onChange={(e) => setAdsenseCode(e.target.value)}
-                  placeholder="<script async src=&quot;https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js&quot;>...</script>"
-                  rows={4}
-                />
-                <p className="text-sm text-muted-foreground">
-                  Paste your Google AdSense ad code here if you want to monetize ad views
-                </p>
-              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="adImage">Ad Image</Label>

@@ -29,3 +29,24 @@ export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
 }
+
+export interface AdSenseSettings {
+  headerAdCode: string;
+  sidebarAdCode: string;
+  footerAdCode: string;
+  viewAdsAdCode: string;
+}
+
+export interface Article {
+  id: string;
+  title: string;
+  content: string;
+  excerpt: string;
+  author: string;
+  tags: string[];
+  slug: string;
+  status: 'draft' | 'published';
+  createdAt: string;
+  publishedAt?: string;
+  readTime: number;
+}

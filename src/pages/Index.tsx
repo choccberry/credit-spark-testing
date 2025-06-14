@@ -1,8 +1,29 @@
 import Footer from '@/components/Footer';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const Index = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <header className="border-b border-border bg-card">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+          <h2 className="text-xl font-bold">Publicdiscus</h2>
+          <nav className="flex gap-4">
+            <Button variant="ghost" asChild>
+              <Link to="/blog">Blog</Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link to="/about">About</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/login">Login</Link>
+            </Button>
+            <Button asChild>
+              <Link to="/register">Sign Up</Link>
+            </Button>
+          </nav>
+        </div>
+      </header>
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center max-w-4xl mx-auto px-4">
           <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">

@@ -89,47 +89,91 @@ const BlogPost = () => {
             <div className="text-xl text-muted-foreground mb-8">
               {article.excerpt}
             </div>
-            <div className="space-y-6 whitespace-pre-wrap leading-relaxed">
-              {article.content.split('\n').map((line, index) => {
-                const trimmedLine = line.trim();
+            <div className="prose prose-gray dark:prose-invert max-w-none">
+              {(() => {
+                const lines = article.content.split('\n');
+                const elements: JSX.Element[] = [];
+                let listItems: JSX.Element[] = [];
+                let listType: 'ul' | 'ol' | null = null;
                 
-                if (!trimmedLine) {
-                  return <br key={index} />;
-                }
+                const flushList = () => {
+                  if (listItems.length > 0) {
+                    if (listType === 'ul') {
+                      elements.push(<ul key={`list-${elements.length}`} className="list-disc ml-6 space-y-2 mb-4">{listItems}</ul>);
+                    } else if (listType === 'ol') {
+                      elements.push(<ol key={`list-${elements.length}`} className="list-decimal ml-6 space-y-2 mb-4">{listItems}</ol>);
+                    }
+                    listItems = [];
+                    listType = null;
+                  }
+                };
                 
-                // Handle headings
-                if (trimmedLine.startsWith('### ')) {
-                  return <h3 key={index} className="text-xl font-semibold mt-8 mb-4">{trimmedLine.slice(4)}</h3>;
-                }
-                if (trimmedLine.startsWith('## ')) {
-                  return <h2 key={index} className="text-2xl font-bold mt-8 mb-4">{trimmedLine.slice(3)}</h2>;
-                }
-                if (trimmedLine.startsWith('# ')) {
-                  return <h1 key={index} className="text-3xl font-bold mt-8 mb-4">{trimmedLine.slice(2)}</h1>;
-                }
+                lines.forEach((line, index) => {
+                  const trimmedLine = line.trim();
+                  
+                  if (!trimmedLine) {
+                    flushList();
+                    elements.push(<br key={index} />);
+                    return;
+                  }
+                  
+                  // Handle headings
+                  if (trimmedLine.startsWith('### ')) {
+                    flushList();
+                    elements.push(<h3 key={index} className="text-xl font-semibold mt-8 mb-4">{trimmedLine.slice(4)}</h3>);
+                    return;
+                  }
+                  if (trimmedLine.startsWith('## ')) {
+                    flushList();
+                    elements.push(<h2 key={index} className="text-2xl font-bold mt-8 mb-4">{trimmedLine.slice(3)}</h2>);
+                    return;
+                  }
+                  if (trimmedLine.startsWith('# ')) {
+                    flushList();
+                    elements.push(<h1 key={index} className="text-3xl font-bold mt-8 mb-4">{trimmedLine.slice(2)}</h1>);
+                    return;
+                  }
+                  
+                  // Handle unordered lists
+                  if (trimmedLine.startsWith('- ') || trimmedLine.startsWith('* ')) {
+                    if (listType !== 'ul') {
+                      flushList();
+                      listType = 'ul';
+                    }
+                    listItems.push(<li key={index}>{trimmedLine.slice(2)}</li>);
+                    return;
+                  }
+                  
+                  // Handle ordered lists
+                  if (/^\d+\.\s/.test(trimmedLine)) {
+                    if (listType !== 'ol') {
+                      flushList();
+                      listType = 'ol';
+                    }
+                    listItems.push(<li key={index}>{trimmedLine.replace(/^\d+\.\s/, '')}</li>);
+                    return;
+                  }
+                  
+                  // Regular paragraphs (flush lists first)
+                  flushList();
+                  
+                  // Handle bold text
+                  const boldText = trimmedLine.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                  
+                  elements.push(
+                    <p 
+                      key={index} 
+                      className="mb-4 leading-relaxed" 
+                      dangerouslySetInnerHTML={{ __html: boldText }}
+                    />
+                  );
+                });
                 
-                // Handle unordered lists
-                if (trimmedLine.startsWith('- ') || trimmedLine.startsWith('* ')) {
-                  return <li key={index} className="ml-6 list-disc mb-2">{trimmedLine.slice(2)}</li>;
-                }
+                // Flush any remaining list items
+                flushList();
                 
-                // Handle ordered lists
-                if (/^\d+\.\s/.test(trimmedLine)) {
-                  return <li key={index} className="ml-6 list-decimal mb-2">{trimmedLine.replace(/^\d+\.\s/, '')}</li>;
-                }
-                
-                // Handle bold text
-                const boldText = trimmedLine.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                
-                // Regular paragraphs
-                return (
-                  <p 
-                    key={index} 
-                    className="mb-4" 
-                    dangerouslySetInnerHTML={{ __html: boldText }}
-                  />
-                );
-              })}
+                return elements;
+              })()}
             </div>
           </article>
 

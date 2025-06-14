@@ -45,7 +45,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
       .replace(/<h5[^>]*>(.*?)<\/h5>/gi, '##### $1\n\n')
       .replace(/<h6[^>]*>(.*?)<\/h6>/gi, '###### $1\n\n')
       .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')
-      .replace(/<br\s*\/?>/gi, ' ')
+      .replace(/<br\s*\/?>/gi, '\n')
       .replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**')
       .replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**')
       .replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*')
@@ -62,15 +62,18 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
       .replace(/&rdquo;/g, '"')
       .replace(/&amp;/g, '&')
       .replace(/<[^>]*>/g, '') // Remove remaining HTML tags
-      // Handle standalone ** markers and clean up formatting
-      .replace(/###\s*\*\*(.*?)\*\*/g, '### $1') // Remove ** from headings
-      .replace(/####\s*\*\*(.*?)\*\*/g, '#### $1') // Remove ** from headings
-      .replace(/([.!?])\s+([A-Z])/g, '$1 $2') // Fix sentence spacing
-      .replace(/([a-z])\s*###\s*([A-Z])/g, '$1\n\n### $2') // Fix heading spacing
-      .replace(/([a-z])\s*####\s*([A-Z])/g, '$1\n\n#### $2') // Fix heading spacing
-      .replace(/\n\s*\n\s*\n/g, '\n\n') // Clean up multiple newlines
-      .replace(/\s+/g, ' ') // Normalize whitespace within paragraphs
-      .replace(/ \n/g, '\n') // Remove spaces before newlines
+      // Clean up bold formatting in headings and normalize whitespace
+      .replace(/###\s*\*\*(.*?)\*\*/g, '### $1')
+      .replace(/####\s*\*\*(.*?)\*\*/g, '#### $1')
+      .replace(/##\s*\*\*(.*?)\*\*/g, '## $1')
+      .replace(/#\s*\*\*(.*?)\*\*/g, '# $1')
+      // Fix spacing around headings
+      .replace(/([a-z.,!?])\s*(#{1,6})\s*([A-Z])/g, '$1\n\n$2 $3')
+      // Clean up excessive whitespace but preserve paragraph breaks
+      .replace(/[ \t]+/g, ' ') // Multiple spaces/tabs to single space
+      .replace(/\n[ \t]+/g, '\n') // Remove spaces after newlines
+      .replace(/[ \t]+\n/g, '\n') // Remove spaces before newlines
+      .replace(/\n{3,}/g, '\n\n') // Multiple newlines to double newline
       .trim();
 
     const currentContent = formData.content;

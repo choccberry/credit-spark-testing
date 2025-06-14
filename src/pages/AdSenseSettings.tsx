@@ -31,8 +31,9 @@ const AdSenseSettings = () => {
   const [settings, setSettings] = useState(getAdSenseSettings());
   const [isLoading, setIsLoading] = useState(false);
 
-  if (!authState.isAuthenticated || authState.user?.role !== 'admin') {
-    return <Navigate to="/login" replace />;
+  // Simple admin check - in real app this would be more sophisticated
+  if (!authState.isAuthenticated || authState.user?.id !== 1) {
+    return <Navigate to="/admin" replace />;
   }
 
   const handleSave = async (e: React.FormEvent) => {

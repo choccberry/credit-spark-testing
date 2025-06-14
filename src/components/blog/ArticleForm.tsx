@@ -45,7 +45,7 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
       .replace(/<h5[^>]*>(.*?)<\/h5>/gi, '##### $1\n\n')
       .replace(/<h6[^>]*>(.*?)<\/h6>/gi, '###### $1\n\n')
       .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')
-      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<br\s*\/?>/gi, ' ')
       .replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**')
       .replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**')
       .replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*')
@@ -62,9 +62,15 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
       .replace(/&rdquo;/g, '"')
       .replace(/&amp;/g, '&')
       .replace(/<[^>]*>/g, '') // Remove remaining HTML tags
+      // Handle standalone ** markers and clean up formatting
+      .replace(/###\s*\*\*(.*?)\*\*/g, '### $1') // Remove ** from headings
+      .replace(/####\s*\*\*(.*?)\*\*/g, '#### $1') // Remove ** from headings
+      .replace(/([.!?])\s+([A-Z])/g, '$1 $2') // Fix sentence spacing
       .replace(/([a-z])\s*###\s*([A-Z])/g, '$1\n\n### $2') // Fix heading spacing
       .replace(/([a-z])\s*####\s*([A-Z])/g, '$1\n\n#### $2') // Fix heading spacing
       .replace(/\n\s*\n\s*\n/g, '\n\n') // Clean up multiple newlines
+      .replace(/\s+/g, ' ') // Normalize whitespace within paragraphs
+      .replace(/ \n/g, '\n') // Remove spaces before newlines
       .trim();
 
     const currentContent = formData.content;

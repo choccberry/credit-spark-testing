@@ -77,10 +77,17 @@ const BlogPost = () => {
             <div className="text-xl text-muted-foreground mb-8">
               {article.excerpt}
             </div>
-            <div 
-              className="space-y-6"
-              dangerouslySetInnerHTML={{ __html: article.content }}
-            />
+            <div className="space-y-6 whitespace-pre-wrap leading-relaxed">
+              {article.content.split('\n').map((paragraph, index) => (
+                paragraph.trim() ? (
+                  <p key={index} className="mb-4">
+                    {paragraph.trim()}
+                  </p>
+                ) : (
+                  <br key={index} />
+                )
+              ))}
+            </div>
           </article>
 
           <aside className="lg:col-span-1">

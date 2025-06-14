@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -36,12 +36,24 @@ const AdminPanel = () => {
     );
   }
 
-  const pendingCampaigns = mockCampaigns.filter(campaign => campaign.status === 'pending_approval');
+  const [campaigns, setCampaigns] = useState(mockCampaigns);
+  const [, forceUpdate] = useState(0);
+  
+  useEffect(() => {
+    // Force component to re-render when campaigns might have changed
+    const interval = setInterval(() => {
+      forceUpdate(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const pendingCampaigns = campaigns.filter(campaign => campaign.status === 'pending_approval');
 
   const handleApprove = (campaignId: number) => {
     const campaignIndex = mockCampaigns.findIndex(c => c.id === campaignId);
     if (campaignIndex !== -1) {
       mockCampaigns[campaignIndex].status = 'active';
+      setCampaigns([...mockCampaigns]);
       toast({
         title: 'Campaign approved',
         description: 'The campaign has been approved and is now active.',
@@ -62,6 +74,7 @@ const AdminPanel = () => {
 
       // Remove the campaign
       mockCampaigns.splice(campaignIndex, 1);
+      setCampaigns([...mockCampaigns]);
       
       toast({
         title: 'Campaign rejected',

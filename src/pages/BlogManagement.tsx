@@ -293,7 +293,6 @@ const BlogManagement = () => {
                         .replace(/&rdquo;/g, '"')
                         .replace(/&amp;/g, '&')
                         .replace(/<[^>]*>/g, '') // Remove remaining HTML tags
-                        .replace(/([.!?])\s*([A-Z])/g, '$1\n\n$2') // Add breaks after sentences that start new paragraphs
                         .replace(/([a-z])\s*###\s*([A-Z])/g, '$1\n\n### $2') // Fix heading spacing
                         .replace(/([a-z])\s*####\s*([A-Z])/g, '$1\n\n#### $2') // Fix heading spacing
                         .replace(/\n\s*\n\s*\n/g, '\n\n') // Clean up multiple newlines

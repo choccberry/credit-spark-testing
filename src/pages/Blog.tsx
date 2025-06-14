@@ -11,9 +11,14 @@ const Blog = () => {
   const [articles, setArticles] = useState<Article[]>([]);
 
   useEffect(() => {
-    const savedArticles = localStorage.getItem('blogArticles');
-    if (savedArticles) {
-      setArticles(JSON.parse(savedArticles));
+    try {
+      const savedArticles = localStorage.getItem('blogArticles');
+      if (savedArticles) {
+        setArticles(JSON.parse(savedArticles));
+      }
+    } catch (error) {
+      console.error('Error loading articles:', error);
+      setArticles([]);
     }
   }, []);
 

@@ -13,13 +13,18 @@ const BlogPost = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedArticles = localStorage.getItem('blogArticles');
-    if (savedArticles) {
-      const articles: Article[] = JSON.parse(savedArticles);
-      const foundArticle = articles.find(
-        a => a.slug === slug && a.status === 'published'
-      );
-      setArticle(foundArticle || null);
+    try {
+      const savedArticles = localStorage.getItem('blogArticles');
+      if (savedArticles) {
+        const articles: Article[] = JSON.parse(savedArticles);
+        const foundArticle = articles.find(
+          a => a.slug === slug && a.status === 'published'
+        );
+        setArticle(foundArticle || null);
+      }
+    } catch (error) {
+      console.error('Error loading article:', error);
+      setArticle(null);
     }
     setLoading(false);
   }, [slug]);

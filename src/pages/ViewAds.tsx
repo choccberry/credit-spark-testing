@@ -16,6 +16,11 @@ const ViewAds = () => {
   const [timeRemaining, setTimeRemaining] = useState(30);
   const [canClaim, setCanClaim] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [adsViewed, setAdsViewed] = useState(() => {
+    const saved = localStorage.getItem('adsViewed');
+    return saved ? parseInt(saved) : 0;
+  });
+  const [showAdSense, setShowAdSense] = useState(false);
 
   if (!authState.isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -78,19 +83,40 @@ const ViewAds = () => {
         }
       }
 
-      toast({
-        title: 'Credits earned!',
-        description: 'You have successfully earned 5 credits.',
-      });
+      // Increment ads viewed counter
+      const newAdsViewed = adsViewed + 1;
+      setAdsViewed(newAdsViewed);
+      localStorage.setItem('adsViewed', newAdsViewed.toString());
+
+      // Show AdSense ad every 30 views
+      if (newAdsViewed % 30 === 0) {
+        setShowAdSense(true);
+        toast({
+          title: 'Credits earned!',
+          description: 'You have successfully earned 5 credits. Watch our sponsor message!',
+        });
+      } else {
+        toast({
+          title: 'Credits earned!',
+          description: 'You have successfully earned 5 credits.',
+        });
+      }
 
       // Load next ad
       setTimeout(() => {
-        loadRandomAd();
+        if (newAdsViewed % 30 !== 0) {
+          loadRandomAd();
+        }
       }, 1000);
 
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleCloseAdSense = () => {
+    setShowAdSense(false);
+    loadRandomAd();
   };
 
   return (
@@ -188,6 +214,33 @@ const ViewAds = () => {
               </Button>
             </CardContent>
           </Card>
+        )}
+
+        {/* AdSense Modal - Shows every 30 ads */}
+        {showAdSense && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <Card className="max-w-lg mx-4">
+              <CardHeader>
+                <CardTitle className="text-center">Sponsor Message</CardTitle>
+                <p className="text-center text-muted-foreground">
+                  Thank you for using our platform! Here's a message from our sponsor.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-muted rounded-lg p-4 min-h-[200px] flex items-center justify-center">
+                  <AdSenseAd adType="viewAds" />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    You've viewed {adsViewed} ads so far. Keep watching to earn more credits!
+                  </p>
+                  <Button onClick={handleCloseAdSense} className="w-full">
+                    Continue Watching Ads
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </main>
     </div>

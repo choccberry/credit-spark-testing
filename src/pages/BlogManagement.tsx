@@ -269,12 +269,12 @@ const BlogManagement = () => {
                       
                       // Convert HTML to markdown-style formatting
                       let formattedText = pastedText
-                        .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1')
-                        .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1')
-                        .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1')
-                        .replace(/<h4[^>]*>(.*?)<\/h4>/gi, '#### $1')
-                        .replace(/<h5[^>]*>(.*?)<\/h5>/gi, '##### $1')
-                        .replace(/<h6[^>]*>(.*?)<\/h6>/gi, '###### $1')
+                        .replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n')
+                        .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n')
+                        .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n')
+                        .replace(/<h4[^>]*>(.*?)<\/h4>/gi, '#### $1\n\n')
+                        .replace(/<h5[^>]*>(.*?)<\/h5>/gi, '##### $1\n\n')
+                        .replace(/<h6[^>]*>(.*?)<\/h6>/gi, '###### $1\n\n')
                         .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n')
                         .replace(/<br\s*\/?>/gi, '\n')
                         .replace(/<strong[^>]*>(.*?)<\/strong>/gi, '**$1**')
@@ -288,7 +288,14 @@ const BlogManagement = () => {
                           let counter = 1;
                           return content.replace(/<li[^>]*>(.*?)<\/li>/gi, () => `${counter++}. $1\n`);
                         })
+                        .replace(/&rsquo;/g, "'")
+                        .replace(/&ldquo;/g, '"')
+                        .replace(/&rdquo;/g, '"')
+                        .replace(/&amp;/g, '&')
                         .replace(/<[^>]*>/g, '') // Remove remaining HTML tags
+                        .replace(/([.!?])\s*([A-Z])/g, '$1\n\n$2') // Add breaks after sentences that start new paragraphs
+                        .replace(/([a-z])\s*###\s*([A-Z])/g, '$1\n\n### $2') // Fix heading spacing
+                        .replace(/([a-z])\s*####\s*([A-Z])/g, '$1\n\n#### $2') // Fix heading spacing
                         .replace(/\n\s*\n\s*\n/g, '\n\n') // Clean up multiple newlines
                         .trim();
 

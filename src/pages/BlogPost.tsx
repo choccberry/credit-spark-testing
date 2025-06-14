@@ -90,15 +90,46 @@ const BlogPost = () => {
               {article.excerpt}
             </div>
             <div className="space-y-6 whitespace-pre-wrap leading-relaxed">
-              {article.content.split('\n').map((paragraph, index) => (
-                paragraph.trim() ? (
-                  <p key={index} className="mb-4">
-                    {paragraph.trim()}
-                  </p>
-                ) : (
-                  <br key={index} />
-                )
-              ))}
+              {article.content.split('\n').map((line, index) => {
+                const trimmedLine = line.trim();
+                
+                if (!trimmedLine) {
+                  return <br key={index} />;
+                }
+                
+                // Handle headings
+                if (trimmedLine.startsWith('### ')) {
+                  return <h3 key={index} className="text-xl font-semibold mt-8 mb-4">{trimmedLine.slice(4)}</h3>;
+                }
+                if (trimmedLine.startsWith('## ')) {
+                  return <h2 key={index} className="text-2xl font-bold mt-8 mb-4">{trimmedLine.slice(3)}</h2>;
+                }
+                if (trimmedLine.startsWith('# ')) {
+                  return <h1 key={index} className="text-3xl font-bold mt-8 mb-4">{trimmedLine.slice(2)}</h1>;
+                }
+                
+                // Handle unordered lists
+                if (trimmedLine.startsWith('- ') || trimmedLine.startsWith('* ')) {
+                  return <li key={index} className="ml-6 list-disc mb-2">{trimmedLine.slice(2)}</li>;
+                }
+                
+                // Handle ordered lists
+                if (/^\d+\.\s/.test(trimmedLine)) {
+                  return <li key={index} className="ml-6 list-decimal mb-2">{trimmedLine.replace(/^\d+\.\s/, '')}</li>;
+                }
+                
+                // Handle bold text
+                const boldText = trimmedLine.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                
+                // Regular paragraphs
+                return (
+                  <p 
+                    key={index} 
+                    className="mb-4" 
+                    dangerouslySetInnerHTML={{ __html: boldText }}
+                  />
+                );
+              })}
             </div>
           </article>
 

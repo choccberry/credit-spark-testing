@@ -3,7 +3,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
-import { Eye, Plus, List, LogOut, Coins } from 'lucide-react';
+import { Eye, Plus, List, LogOut, Coins, Shield } from 'lucide-react';
 
 const Dashboard = () => {
   const { authState, logout } = useAuth();
@@ -89,6 +89,25 @@ const Dashboard = () => {
               </Button>
             </CardContent>
           </Card>
+
+          {authState.user?.id === 1 && (
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-red-500" />
+                  Admin Panel
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-4">
+                  Review and approve pending ad campaigns.
+                </p>
+                <Button asChild variant="destructive" className="w-full">
+                  <Link to="/admin">Access Admin Panel</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <Card className="mt-8">

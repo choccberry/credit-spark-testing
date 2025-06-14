@@ -50,13 +50,15 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
       .replace(/<b[^>]*>(.*?)<\/b>/gi, '**$1**')
       .replace(/<em[^>]*>(.*?)<\/em>/gi, '*$1*')
       .replace(/<i[^>]*>(.*?)<\/i>/gi, '*$1*')
+      // Handle unordered lists
       .replace(/<ul[^>]*>(.*?)<\/ul>/gis, (match, content) => {
-        const items = content.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n');
+        const items = content.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1');
         return '\n' + items + '\n';
       })
+      // Handle ordered lists
       .replace(/<ol[^>]*>(.*?)<\/ol>/gis, (match, content) => {
         let counter = 1;
-        const items = content.replace(/<li[^>]*>(.*?)<\/li>/gi, () => `${counter++}. $1\n`);
+        const items = content.replace(/<li[^>]*>(.*?)<\/li>/gi, () => `${counter++}. $1`);
         return '\n' + items + '\n';
       })
       .replace(/&rsquo;/g, "'")
@@ -69,16 +71,16 @@ const ArticleForm: React.FC<ArticleFormProps> = ({
       .replace(/####\s*\*\*(.*?)\*\*/g, '#### $1')
       .replace(/##\s*\*\*(.*?)\*\*/g, '## $1')
       .replace(/#\s*\*\*(.*?)\*\*/g, '# $1')
-      // Fix spacing around headings - ensure proper breaks
+      // Fix spacing around headings
       .replace(/([a-z.,!?])\s*(#{1,6})\s*([A-Z])/g, '$1\n\n$2 $3')
-      // Normalize whitespace but preserve structure
+      // Fix list formatting - ensure each list item is on its own line
+      .replace(/(-\s+[^\n]+)([^\n-])/g, '$1\n$2')
+      .replace(/(\d+\.\s+[^\n]+)([^\n\d])/g, '$1\n$2')
+      // Normalize whitespace
       .replace(/[ \t]+/g, ' ') // Multiple spaces/tabs to single space
       .replace(/\n[ \t]+/g, '\n') // Remove spaces after newlines
       .replace(/[ \t]+\n/g, '\n') // Remove spaces before newlines
       .replace(/\n{3,}/g, '\n\n') // Limit to max 2 newlines
-      // Fix list spacing - ensure lists have proper breaks but not excessive
-      .replace(/\n\n-/g, '\n\n-') // Keep double newline before lists
-      .replace(/\n\n(\d+\.)/g, '\n\n$1') // Keep double newline before numbered lists
       .trim();
 
     const currentContent = formData.content;

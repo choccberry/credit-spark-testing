@@ -1,20 +1,62 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
-import { mockCampaigns } from '@/data/mockData';
-import { ArrowLeft, Plus, Coins } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { mockCampaigns, mockUsers } from '@/data/mockData';
+import { ArrowLeft, Plus, Coins, Trash2 } from 'lucide-react';
 
 const MyCampaigns = () => {
-  const { authState } = useAuth();
+  const { authState, updateCredits } = useAuth();
+  const { toast } = useToast();
+  const [campaigns, setCampaigns] = useState(mockCampaigns);
 
   if (!authState.isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  const userCampaigns = mockCampaigns.filter(campaign => campaign.userId === authState.user?.id);
+  useEffect(() => {
+    setCampaigns([...mockCampaigns]);
+  }, []);
+
+  const userCampaigns = campaigns.filter(campaign => campaign.userId === authState.user?.id);
+
+  const handleDeleteCampaign = (campaignId: number) => {
+    const campaignIndex = mockCampaigns.findIndex(c => c.id === campaignId);
+    if (campaignIndex !== -1) {
+      const campaign = mockCampaigns[campaignIndex];
+      
+      // Refund remaining credits if campaign is pending or has remaining budget
+      if (campaign.status === 'pending_approval' || campaign.remainingBudgetCredits > 0) {
+        const refundAmount = campaign.status === 'pending_approval' 
+          ? campaign.totalBudgetCredits 
+          : campaign.remainingBudgetCredits;
+        
+        updateCredits((authState.user?.creditBalance || 0) + refundAmount);
+        
+        // Update user's balance in mock data too
+        const userIndex = mockUsers.findIndex(u => u.id === authState.user?.id);
+        if (userIndex !== -1) {
+          mockUsers[userIndex].creditBalance += refundAmount;
+        }
+      }
+
+      // Remove campaign
+      mockCampaigns.splice(campaignIndex, 1);
+      setCampaigns([...mockCampaigns]);
+      
+      toast({
+        title: 'Campaign deleted',
+        description: campaign.status === 'pending_approval' 
+          ? 'Campaign deleted and credits refunded.'
+          : campaign.remainingBudgetCredits > 0 
+          ? 'Campaign deleted and remaining credits refunded.'
+          : 'Campaign deleted successfully.',
+      });
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -98,7 +140,7 @@ const MyCampaigns = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                       <div className="space-y-1">
                         <p className="text-sm font-medium text-muted-foreground">Total Budget</p>
                         <p className="text-lg font-semibold">{campaign.totalBudgetCredits} credits</p>
@@ -127,6 +169,16 @@ const MyCampaigns = () => {
                           {Math.round(((campaign.totalBudgetCredits - campaign.remainingBudgetCredits) / campaign.totalBudgetCredits) * 100)}% complete
                         </p>
                       </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => handleDeleteCampaign(campaign.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Campaign
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>

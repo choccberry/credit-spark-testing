@@ -40,10 +40,13 @@ const AdminPanel = () => {
   const [, forceUpdate] = useState(0);
   
   useEffect(() => {
-    // Force component to re-render when campaigns might have changed
+    // Update campaigns state when mockCampaigns changes
+    setCampaigns([...mockCampaigns]);
+    
+    // Poll for updates every 2 seconds
     const interval = setInterval(() => {
-      forceUpdate(prev => prev + 1);
-    }, 1000);
+      setCampaigns([...mockCampaigns]);
+    }, 2000);
     return () => clearInterval(interval);
   }, []);
 

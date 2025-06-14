@@ -157,9 +157,14 @@ const BlogPost = () => {
                     }
                     const match = trimmedLine.match(/^(\d+)\.\s(.*)$/);
                     if (match) {
-                      const number = match[1];
                       const text = match[2];
-                      listItems.push(<li key={index} value={parseInt(number)}>{text}</li>);
+                      // Format text with bold/italic support
+                      const formattedText = text
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*(.*?)\*/g, '<em>$1</em>');
+                      listItems.push(
+                        <li key={index} dangerouslySetInnerHTML={{ __html: formattedText }} />
+                      );
                     }
                     return;
                   }

@@ -48,7 +48,19 @@ const Blog = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {publishedArticles.map((article) => (
-              <Card key={article.id} className="h-fit">
+              <Card key={article.id} className="h-fit overflow-hidden">
+                {article.imageUrl && (
+                  <div className="aspect-video overflow-hidden">
+                    <img 
+                      src={article.imageUrl.startsWith('photo-') 
+                        ? `https://images.unsplash.com/${article.imageUrl}?w=400&h=200&fit=crop&auto=format`
+                        : article.imageUrl
+                      }
+                      alt={article.title}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                )}
                 <CardHeader>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
                     <Calendar className="h-4 w-4" />

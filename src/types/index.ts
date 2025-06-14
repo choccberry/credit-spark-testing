@@ -49,4 +49,5 @@ export interface Article {
   createdAt: string;
   publishedAt?: string;
   readTime: number;
+  imageUrl?: string;
 }

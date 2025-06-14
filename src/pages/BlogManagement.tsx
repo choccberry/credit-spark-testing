@@ -24,7 +24,8 @@ const BlogManagement = () => {
     tags: '',
     author: authState.user?.username || 'Admin',
     readTime: 5,
-    status: 'draft' as 'draft' | 'published'
+    status: 'draft' as 'draft' | 'published',
+    imageUrl: ''
   });
 
   if (!authState.isAuthenticated) {
@@ -84,7 +85,8 @@ const BlogManagement = () => {
       status: formData.status,
       slug: editingArticle?.slug || generateSlug(formData.title),
       createdAt: editingArticle?.createdAt || new Date().toISOString(),
-      publishedAt: formData.status === 'published' ? new Date().toISOString() : undefined
+      publishedAt: formData.status === 'published' ? new Date().toISOString() : undefined,
+      imageUrl: formData.imageUrl || undefined
     };
 
     let newArticles;
@@ -116,7 +118,8 @@ const BlogManagement = () => {
       tags: '',
       author: authState.user?.username || 'Admin',
       readTime: 5,
-      status: 'draft'
+      status: 'draft',
+      imageUrl: ''
     });
     setEditingArticle(null);
     setShowForm(false);
@@ -130,7 +133,8 @@ const BlogManagement = () => {
       tags: article.tags.join(', '),
       author: article.author,
       readTime: article.readTime,
-      status: article.status
+      status: article.status,
+      imageUrl: article.imageUrl || ''
     });
     setEditingArticle(article);
     setShowForm(true);
@@ -231,6 +235,18 @@ const BlogManagement = () => {
                     placeholder="Brief description of the article..."
                     required
                   />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Featured Image URL (Optional)</label>
+                  <Input
+                    value={formData.imageUrl}
+                    onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                    placeholder="https://example.com/image.jpg or photo-1649972904349-6e44c42644a7"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Use placeholder IDs like: photo-1649972904349-6e44c42644a7, photo-1488590528505-98d2b5aba04b
+                  </p>
                 </div>
 
                 <div>

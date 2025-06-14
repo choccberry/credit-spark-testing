@@ -74,6 +74,18 @@ const BlogPost = () => {
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <article className="lg:col-span-3 prose prose-gray dark:prose-invert max-w-none">
+            {article.imageUrl && (
+              <div className="mb-8">
+                <img 
+                  src={article.imageUrl.startsWith('photo-') 
+                    ? `https://images.unsplash.com/${article.imageUrl}?w=800&h=400&fit=crop&auto=format`
+                    : article.imageUrl
+                  }
+                  alt={article.title}
+                  className="w-full h-64 object-cover rounded-lg"
+                />
+              </div>
+            )}
             <div className="text-xl text-muted-foreground mb-8">
               {article.excerpt}
             </div>

@@ -6,7 +6,7 @@ const Index = () => {
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center max-w-4xl mx-auto px-4">
           <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-            Credit Spark Exchange
+            Publicdiscus Ad Exchange
           </h1>
           <p className="text-xl text-muted-foreground mb-8">
             Watch ads to earn credits, then use those credits to promote your own business. 

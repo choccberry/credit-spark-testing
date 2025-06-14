@@ -14,13 +14,13 @@ const Footer = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-1">
-            <h3 className="text-lg font-semibold mb-4">Credit Spark Exchange</h3>
+            <h3 className="text-lg font-semibold mb-4">Publicdiscus Ad Exchange</h3>
             <p className="text-muted-foreground text-sm mb-4">
               A revolutionary platform that democratizes digital advertising through our 
               innovative credit-based exchange system.
             </p>
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Credit Spark Exchange. All rights reserved.
+              © {new Date().getFullYear()} Publicdiscus Ad Exchange. All rights reserved.
             </p>
           </div>
 

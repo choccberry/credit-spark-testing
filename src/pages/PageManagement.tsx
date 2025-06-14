@@ -233,9 +233,11 @@ const PageManagement = () => {
                           View
                         </Link>
                       </Button>
-                      <Button variant="outline" size="sm" disabled>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit (Coming Soon)
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`${page.path}`}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit Content
+                        </Link>
                       </Button>
                     </div>
                   </CardContent>

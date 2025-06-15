@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/SupabaseAuthProvider';
 import { Article } from '@/types';
 import ArticleForm from '@/components/blog/ArticleForm';
 import ArticleList from '@/components/blog/ArticleList';
@@ -30,14 +31,14 @@ const BlogManagement = () => {
     content: '',
     excerpt: '',
     tags: '',
-    author: authState.user?.username || 'Admin',
+    author: authState.user?.email || 'Admin',
     readTime: 5,
     status: 'draft',
     imageUrl: ''
   });
 
   if (!authState.isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
   // Simple admin check - in real app this would be more sophisticated

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/SupabaseAuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { mockCampaigns, mockAds } from '@/data/mockData';
 import { ArrowLeft, Upload, Coins } from 'lucide-react';
@@ -22,7 +23,7 @@ const CreateCampaign = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   if (!authState.isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/SupabaseAuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Save } from 'lucide-react';
 

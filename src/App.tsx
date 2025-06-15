@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SupabaseAuthProvider } from "./contexts/SupabaseAuthProvider";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Messages from "./pages/Messages";
 import Dashboard from "./pages/Dashboard";
 import ViewAds from "./pages/ViewAds";
@@ -36,6 +38,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/view-ads" element={<ViewAds />} />
             <Route path="/create-campaign" element={<CreateCampaign />} />

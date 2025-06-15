@@ -234,58 +234,60 @@ const UserManagement = () => {
             <CardTitle>All Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Username</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Credits</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">
-                      {user.username || 'No username'}
-                    </TableCell>
-                    <TableCell>{user.email || 'No email'}</TableCell>
-                    <TableCell>{user.credits}</TableCell>
-                    <TableCell>{getRoleBadge(user.role || 'user')}</TableCell>
-                    <TableCell>
-                      {new Date(user.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        {user.role !== 'admin' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleRoleChange(user.user_id, 'admin')}
-                          >
-                            Make Admin
-                          </Button>
-                        )}
-                        {user.role === 'admin' && user.user_id !== authState.user?.id && (
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleRoleChange(user.user_id, 'user')}
-                          >
-                            Remove Admin
-                          </Button>
-                        )}
-                        {user.user_id === authState.user?.id && (
-                          <Badge variant="outline">You</Badge>
-                        )}
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Username</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Credits</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Joined</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">
+                        {user.username || 'No username'}
+                      </TableCell>
+                      <TableCell>{user.email || 'No email'}</TableCell>
+                      <TableCell>{user.credits}</TableCell>
+                      <TableCell>{getRoleBadge(user.role || 'user')}</TableCell>
+                      <TableCell>
+                        {new Date(user.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          {user.role !== 'admin' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleRoleChange(user.user_id, 'admin')}
+                            >
+                              Make Admin
+                            </Button>
+                          )}
+                          {user.role === 'admin' && user.user_id !== authState.user?.id && (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleRoleChange(user.user_id, 'user')}
+                            >
+                              Remove Admin
+                            </Button>
+                          )}
+                          {user.user_id === authState.user?.id && (
+                            <Badge variant="outline">You</Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </main>

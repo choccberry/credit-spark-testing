@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/SupabaseAuthProvider';
 import { Plus, Edit, Trash2, ArrowLeft, Shield, Globe } from 'lucide-react';
 
 interface Page {
@@ -33,24 +33,7 @@ const PageManagement = () => {
     return <Navigate to="/login" replace />;
   }
 
-  if (authState.user?.id !== 1) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="max-w-md">
-          <CardContent className="text-center py-12">
-            <Shield className="h-16 w-16 mx-auto mb-4 text-destructive" />
-            <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
-            <p className="text-muted-foreground mb-6">
-              You don't have permission to access the page management panel.
-            </p>
-            <Button asChild>
-              <Link to="/dashboard">Return to Dashboard</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // For now, allow all authenticated users to access page management
 
   useEffect(() => {
     const savedPages = localStorage.getItem('customPages');

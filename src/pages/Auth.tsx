@@ -101,6 +101,8 @@ const Auth = () => {
     );
   }
 
+  console.log('Auth state:', authState);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <Card className="w-full max-w-md">

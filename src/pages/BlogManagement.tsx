@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -39,15 +40,20 @@ const BlogManagement = () => {
     imageUrl: ''
   });
 
-  if (!authState.isAuthenticated) {
-    return <Navigate to="/auth" replace />;
-  }
-
   useEffect(() => {
     if (authState.user) {
       checkAdminRole();
+    } else if (!authState.loading) {
+      setLoading(false);
     }
-  }, [authState.user]);
+  }, [authState.user, authState.loading]);
+
+  useEffect(() => {
+    const savedArticles = localStorage.getItem('blogArticles');
+    if (savedArticles) {
+      setArticles(JSON.parse(savedArticles));
+    }
+  }, []);
 
   const checkAdminRole = async () => {
     if (!authState.user) return;
@@ -73,27 +79,27 @@ const BlogManagement = () => {
     }
   };
 
-  if (loading) {
+  // Show loading state while checking authentication and admin status
+  if (authState.loading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-muted-foreground">Checking permissions...</p>
+          <p className="mt-2 text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
   }
 
+  // Redirect to auth if not authenticated
+  if (!authState.isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Show access denied if not admin
   if (!isAdmin) {
     return <AccessDenied />;
   }
-
-  useEffect(() => {
-    const savedArticles = localStorage.getItem('blogArticles');
-    if (savedArticles) {
-      setArticles(JSON.parse(savedArticles));
-    }
-  }, []);
 
   const generateSlug = (title: string): string => {
     return title

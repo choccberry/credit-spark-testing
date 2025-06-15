@@ -3,92 +3,191 @@ import { Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/SupabaseAuthProvider';
 import { useToast } from '@/hooks/use-toast';
-import { mockCampaigns, mockUsers } from '@/data/mockData';
+import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, Check, X, Shield, Settings, BookOpen, Globe } from 'lucide-react';
+
+interface Campaign {
+  id: string;
+  campaign_name: string;
+  user_id: string;
+  total_budget_credits: number;
+  remaining_budget_credits: number;
+  status: string;
+  created_at: string;
+}
+
+interface Profile {
+  id: string;
+  user_id: string;
+  username?: string;
+  email?: string;
+  credits: number;
+}
 
 const AdminPanel = () => {
   const { authState } = useAuth();
   const { toast } = useToast();
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [loading, setLoading] = useState(true);
 
   if (!authState.isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
-  // Simple admin check - in real app this would be more sophisticated
-  if (authState.user?.id !== 1) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="max-w-md">
-          <CardContent className="text-center py-12">
-            <Shield className="h-16 w-16 mx-auto mb-4 text-destructive" />
-            <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
-            <p className="text-muted-foreground mb-6">
-              You don't have permission to access the admin panel.
-            </p>
-            <Button asChild>
-              <Link to="/dashboard">Return to Dashboard</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const [campaigns, setCampaigns] = useState(mockCampaigns);
-  const [, forceUpdate] = useState(0);
+  // For now, allow any authenticated user to access admin panel
+  // In production, you'd check for admin role in the profile
   
   useEffect(() => {
-    // Update campaigns state when mockCampaigns changes
-    setCampaigns([...mockCampaigns]);
-    
-    // Poll for updates every 2 seconds
-    const interval = setInterval(() => {
-      setCampaigns([...mockCampaigns]);
-    }, 2000);
-    return () => clearInterval(interval);
+    fetchCampaigns();
+    fetchProfiles();
   }, []);
 
-  const pendingCampaigns = campaigns.filter(campaign => campaign.status === 'pending_approval');
+  const fetchCampaigns = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('campaigns')
+        .select('*')
+        .eq('status', 'pending_approval');
 
-  const handleApprove = (campaignId: number) => {
-    const campaignIndex = mockCampaigns.findIndex(c => c.id === campaignId);
-    if (campaignIndex !== -1) {
-      mockCampaigns[campaignIndex].status = 'active';
-      setCampaigns([...mockCampaigns]);
+      if (error) {
+        console.error('Error fetching campaigns:', error);
+        return;
+      }
+
+      setCampaigns(data || []);
+    } catch (error) {
+      console.error('Error fetching campaigns:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchProfiles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*');
+
+      if (error) {
+        console.error('Error fetching profiles:', error);
+        return;
+      }
+
+      setProfiles(data || []);
+    } catch (error) {
+      console.error('Error fetching profiles:', error);
+    }
+  };
+
+  const handleApprove = async (campaignId: string) => {
+    try {
+      const { error } = await supabase
+        .from('campaigns')
+        .update({ status: 'active' })
+        .eq('id', campaignId);
+
+      if (error) {
+        console.error('Error approving campaign:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to approve campaign.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Remove from pending campaigns
+      setCampaigns(campaigns.filter(c => c.id !== campaignId));
+      
       toast({
         title: 'Campaign approved',
         description: 'The campaign has been approved and is now active.',
       });
+    } catch (error) {
+      console.error('Error approving campaign:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to approve campaign.',
+        variant: 'destructive',
+      });
     }
   };
 
-  const handleReject = (campaignId: number) => {
-    const campaignIndex = mockCampaigns.findIndex(c => c.id === campaignId);
-    if (campaignIndex !== -1) {
-      const campaign = mockCampaigns[campaignIndex];
-      
-      // Refund credits to the advertiser
-      const userIndex = mockUsers.findIndex(u => u.id === campaign.userId);
-      if (userIndex !== -1) {
-        mockUsers[userIndex].creditBalance += campaign.totalBudgetCredits;
+  const handleReject = async (campaignId: string) => {
+    try {
+      const campaign = campaigns.find(c => c.id === campaignId);
+      if (!campaign) return;
+
+      // Get current user credits and refund
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('credits')
+        .eq('user_id', campaign.user_id)
+        .single();
+
+      if (!profileError && profileData) {
+        const { error: creditError } = await supabase
+          .from('profiles')
+          .update({ 
+            credits: profileData.credits + campaign.total_budget_credits
+          })
+          .eq('user_id', campaign.user_id);
+
+        if (creditError) {
+          console.error('Error refunding credits:', creditError);
+        }
       }
 
-      // Remove the campaign
-      mockCampaigns.splice(campaignIndex, 1);
-      setCampaigns([...mockCampaigns]);
+      // Delete the campaign
+      const { error: deleteError } = await supabase
+        .from('campaigns')
+        .delete()
+        .eq('id', campaignId);
+
+      if (deleteError) {
+        console.error('Error deleting campaign:', deleteError);
+        toast({
+          title: 'Error',
+          description: 'Failed to reject campaign.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Remove from campaigns
+      setCampaigns(campaigns.filter(c => c.id !== campaignId));
       
       toast({
         title: 'Campaign rejected',
         description: 'The campaign has been rejected and credits have been refunded.',
       });
+    } catch (error) {
+      console.error('Error rejecting campaign:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to reject campaign.',
+        variant: 'destructive',
+      });
     }
   };
 
-  const getCampaignOwner = (userId: number) => {
-    return mockUsers.find(user => user.id === userId);
+  const getCampaignOwner = (userId: string) => {
+    return profiles.find(profile => profile.user_id === userId);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading campaigns...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -135,7 +234,7 @@ const AdminPanel = () => {
           </p>
         </div>
 
-        {pendingCampaigns.length === 0 ? (
+        {campaigns.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <Check className="h-16 w-16 mx-auto mb-4 text-green-500" />
@@ -147,16 +246,16 @@ const AdminPanel = () => {
           </Card>
         ) : (
           <div className="space-y-6">
-            {pendingCampaigns.map((campaign) => {
-              const owner = getCampaignOwner(campaign.userId);
+            {campaigns.map((campaign) => {
+              const owner = getCampaignOwner(campaign.user_id);
               return (
                 <Card key={campaign.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div>
-                        <CardTitle className="text-xl">{campaign.campaignName}</CardTitle>
+                        <CardTitle className="text-xl">{campaign.campaign_name}</CardTitle>
                         <p className="text-muted-foreground text-sm mt-1">
-                          By {owner?.username} • Created on {new Date(campaign.createdAt).toLocaleDateString()}
+                          By {owner?.username} • Created on {new Date(campaign.created_at).toLocaleDateString()}
                         </p>
                       </div>
                       <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100">
@@ -168,12 +267,12 @@ const AdminPanel = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                       <div className="space-y-1">
                         <p className="text-sm font-medium text-muted-foreground">Budget</p>
-                        <p className="text-lg font-semibold">{campaign.totalBudgetCredits} credits</p>
+                        <p className="text-lg font-semibold">{campaign.total_budget_credits} credits</p>
                       </div>
                       <div className="space-y-1">
                         <p className="text-sm font-medium text-muted-foreground">Estimated Views</p>
                         <p className="text-lg font-semibold">
-                          {Math.floor(campaign.totalBudgetCredits / 5)} views
+                          {Math.floor(campaign.total_budget_credits / 5)} views
                         </p>
                       </div>
                       <div className="space-y-1">

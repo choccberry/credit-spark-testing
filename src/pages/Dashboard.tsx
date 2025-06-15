@@ -2,14 +2,14 @@ import React from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { useAuth } from '@/hooks/useAuth';
-import { Eye, Plus, List, LogOut, Coins, Shield } from 'lucide-react';
+import { useAuth } from '@/contexts/SupabaseAuthProvider';
+import { Eye, Plus, List, LogOut, Coins, Shield, MessageCircle } from 'lucide-react';
 
 const Dashboard = () => {
-  const { authState, logout } = useAuth();
+  const { authState, signOut } = useAuth();
 
   if (!authState.isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
   return (
@@ -20,9 +20,9 @@ const Dashboard = () => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm">
               <Coins className="h-4 w-4 text-yellow-500" />
-              <span className="font-medium">{authState.user?.creditBalance} Credits</span>
+              <span className="font-medium">{authState.profile?.credits || 0} Credits</span>
             </div>
-            <Button variant="outline" onClick={logout} size="sm">
+            <Button variant="outline" onClick={signOut} size="sm">
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
@@ -32,7 +32,7 @@ const Dashboard = () => {
 
       <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Welcome back, {authState.user?.username}!</h2>
+          <h2 className="text-3xl font-bold mb-2">Welcome back, {authState.profile?.display_name || authState.profile?.username || authState.user?.email}!</h2>
           <p className="text-muted-foreground">
             Manage your ad campaigns and earn credits by viewing ads.
           </p>
@@ -90,7 +90,24 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {authState.user?.id === 1 && (
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-orange-500" />
+                Messages
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                Chat with advertisers and interested users.
+              </p>
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/messages">View Messages</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {authState.profile?.id === '1' && (
             <Card className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -117,7 +134,7 @@ const Dashboard = () => {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
               <div className="p-4 bg-muted rounded-lg">
-                <div className="text-2xl font-bold text-primary">{authState.user?.creditBalance}</div>
+                <div className="text-2xl font-bold text-primary">{authState.profile?.credits || 0}</div>
                 <div className="text-sm text-muted-foreground">Available Credits</div>
               </div>
               <div className="p-4 bg-muted rounded-lg">

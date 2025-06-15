@@ -3,10 +3,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthProvider";
+import { SupabaseAuthProvider } from "./contexts/SupabaseAuthProvider";
 import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Auth from "./pages/Auth";
+import Messages from "./pages/Messages";
 import Dashboard from "./pages/Dashboard";
 import ViewAds from "./pages/ViewAds";
 import CreateCampaign from "./pages/CreateCampaign";
@@ -28,18 +28,18 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AuthProvider>
+      <SupabaseAuthProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/view-ads" element={<ViewAds />} />
             <Route path="/create-campaign" element={<CreateCampaign />} />
             <Route path="/my-campaigns" element={<MyCampaigns />} />
+            <Route path="/messages" element={<Messages />} />
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/admin/adsense" element={<AdSenseSettings />} />
             <Route path="/admin/blog" element={<BlogManagement />} />
@@ -54,7 +54,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-      </AuthProvider>
+      </SupabaseAuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

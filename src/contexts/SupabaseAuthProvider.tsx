@@ -81,16 +81,20 @@ export const SupabaseAuthProvider: React.FC<SupabaseAuthProviderProps> = ({ chil
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (session?.user) {
-          const profile = await fetchProfile(session.user.id);
-          setAuthState({
-            user: session.user,
-            profile,
-            session,
-            isAuthenticated: true,
-            loading: false,
-          });
+          // Use setTimeout to defer the profile fetch and prevent deadlocks
+          setTimeout(() => {
+            fetchProfile(session.user.id).then((profile) => {
+              setAuthState({
+                user: session.user,
+                profile,
+                session,
+                isAuthenticated: true,
+                loading: false,
+              });
+            });
+          }, 0);
         } else {
           setAuthState({
             user: null,

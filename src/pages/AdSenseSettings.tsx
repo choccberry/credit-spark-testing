@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/SupabaseAuthProvider';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, Save } from 'lucide-react';
 
 // Store AdSense settings in localStorage for now
@@ -31,9 +31,55 @@ const AdSenseSettings = () => {
   const { toast } = useToast();
   const [settings, setSettings] = useState(getAdSenseSettings());
   const [isLoading, setIsLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Simple admin check - in real app this would be more sophisticated
-  if (!authState.isAuthenticated || authState.user?.id !== 1) {
+  if (!authState.isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  useEffect(() => {
+    if (authState.user) {
+      checkAdminRole();
+    }
+  }, [authState.user]);
+
+  const checkAdminRole = async () => {
+    if (!authState.user) return;
+    
+    try {
+      const { data, error } = await supabase.rpc('has_role', {
+        _user_id: authState.user.id,
+        _role: 'admin'
+      });
+
+      if (error) {
+        console.error('Error checking admin role:', error);
+        setIsAdmin(false);
+        return;
+      }
+
+      setIsAdmin(data || false);
+    } catch (error) {
+      console.error('Error checking admin role:', error);
+      setIsAdmin(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Checking permissions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
     return <Navigate to="/admin" replace />;
   }
 

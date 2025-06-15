@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/SupabaseAuthProvider';
+import { supabase } from '@/integrations/supabase/client';
 import { Article } from '@/types';
 import ArticleForm from '@/components/blog/ArticleForm';
 import ArticleList from '@/components/blog/ArticleList';
@@ -26,6 +26,8 @@ const BlogManagement = () => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState<ArticleFormData>({
     title: '',
     content: '',
@@ -41,8 +43,48 @@ const BlogManagement = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Simple admin check - in real app this would be more sophisticated
-  if (authState.user?.id !== 1) {
+  useEffect(() => {
+    if (authState.user) {
+      checkAdminRole();
+    }
+  }, [authState.user]);
+
+  const checkAdminRole = async () => {
+    if (!authState.user) return;
+    
+    try {
+      const { data, error } = await supabase.rpc('has_role', {
+        _user_id: authState.user.id,
+        _role: 'admin'
+      });
+
+      if (error) {
+        console.error('Error checking admin role:', error);
+        setIsAdmin(false);
+        return;
+      }
+
+      setIsAdmin(data || false);
+    } catch (error) {
+      console.error('Error checking admin role:', error);
+      setIsAdmin(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Checking permissions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
     return <AccessDenied />;
   }
 
@@ -110,7 +152,7 @@ const BlogManagement = () => {
       content: '',
       excerpt: '',
       tags: '',
-      author: authState.user?.username || 'Admin',
+      author: authState.user?.email || 'Admin',
       readTime: 5,
       status: 'draft',
       imageUrl: ''

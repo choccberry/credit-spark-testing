@@ -6,77 +6,144 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/SupabaseAuthProvider';
 import { useToast } from '@/hooks/use-toast';
-import { mockCampaigns, mockUsers } from '@/data/mockData';
+import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, Plus, Coins, Trash2 } from 'lucide-react';
 
+interface Campaign {
+  id: string;
+  campaign_name: string;
+  total_budget_credits: number;
+  remaining_budget_credits: number;
+  status: string;
+  created_at: string;
+}
+
 const MyCampaigns = () => {
-  const { authState, updateCredits } = useAuth();
+  const { authState } = useAuth();
   const { toast } = useToast();
-  const [campaigns, setCampaigns] = useState(mockCampaigns);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
 
   if (!authState.isAuthenticated) {
     return <Navigate to="/auth" replace />;
   }
 
   useEffect(() => {
-    setCampaigns([...mockCampaigns]);
-  }, []);
+    if (authState.user) {
+      fetchCampaigns();
+    }
+  }, [authState.user]);
 
-  const userCampaigns = campaigns.filter(campaign => campaign.userId === authState.user?.id);
+  const fetchCampaigns = async () => {
+    if (!authState.user) return;
 
-  const handleDeleteCampaign = (campaignId: number) => {
-    const campaignIndex = mockCampaigns.findIndex(c => c.id === campaignId);
-    if (campaignIndex !== -1) {
-      const campaign = mockCampaigns[campaignIndex];
-      
-      // Refund remaining credits if campaign is pending or has remaining budget
-      if (campaign.status === 'pending_approval' || campaign.remainingBudgetCredits > 0) {
-        const refundAmount = campaign.status === 'pending_approval' 
-          ? campaign.totalBudgetCredits 
-          : campaign.remainingBudgetCredits;
-        
-        updateCredits((authState.user?.creditBalance || 0) + refundAmount);
-        
-        // Update user's balance in mock data too
-        const userIndex = mockUsers.findIndex(u => u.id === authState.user?.id);
-        if (userIndex !== -1) {
-          mockUsers[userIndex].creditBalance += refundAmount;
-        }
+    try {
+      const { data, error } = await supabase
+        .from('campaigns')
+        .select('*')
+        .eq('user_id', authState.user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching campaigns:', error);
+        return;
       }
 
-      // Remove campaign
-      mockCampaigns.splice(campaignIndex, 1);
-      setCampaigns([...mockCampaigns]);
+      setCampaigns(data || []);
+    } catch (error) {
+      console.error('Error fetching campaigns:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const userCredits = authState.profile?.credits || 0;
+
+  const handleDeleteCampaign = async (campaignId: string) => {
+    const campaign = campaigns.find(c => c.id === campaignId);
+    if (!campaign || !authState.user) return;
+
+    try {
+      // Only allow deletion if pending approval
+      if (campaign.status !== 'pending_approval') {
+        toast({
+          title: 'Cannot delete',
+          description: 'Only pending campaigns can be deleted.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Delete campaign
+      const { error: deleteError } = await supabase
+        .from('campaigns')
+        .delete()
+        .eq('id', campaignId);
+
+      if (deleteError) {
+        console.error('Error deleting campaign:', deleteError);
+        toast({
+          title: 'Error',
+          description: 'Failed to delete campaign.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Refund credits
+      const { error: creditError } = await supabase
+        .from('profiles')
+        .update({ 
+          credits: userCredits + campaign.total_budget_credits
+        })
+        .eq('user_id', authState.user.id);
+
+      if (creditError) {
+        console.error('Error refunding credits:', creditError);
+      }
+
+      // Update local state
+      setCampaigns(campaigns.filter(c => c.id !== campaignId));
       
       toast({
         title: 'Campaign deleted',
-        description: campaign.status === 'pending_approval' 
-          ? 'Campaign deleted and credits refunded.'
-          : campaign.remainingBudgetCredits > 0 
-          ? 'Campaign deleted and remaining credits refunded.'
-          : 'Campaign deleted successfully.',
+        description: `Campaign deleted and ${campaign.total_budget_credits} credits refunded.`,
+      });
+    } catch (error) {
+      console.error('Error deleting campaign:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete campaign.',
+        variant: 'destructive',
       });
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100';
       case 'pending_approval':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100';
+        return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100">Pending Approval</Badge>;
+      case 'active':
+        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Active</Badge>;
       case 'paused':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100';
+        return <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100">Paused</Badge>;
       case 'completed':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100';
+        return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">Completed</Badge>;
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100';
+        return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
-  const formatStatus = (status: string) => {
-    return status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading campaigns...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -92,9 +159,9 @@ const MyCampaigns = () => {
             <h1 className="text-2xl font-bold">My Campaigns</h1>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm">
-              <Coins className="h-4 w-4 text-yellow-500" />
-              <span className="font-medium">{authState.user?.creditBalance} Credits</span>
+            <div className="flex items-center gap-2 text-sm bg-primary/10 px-3 py-2 rounded-lg">
+              <Coins className="h-4 w-4 text-primary" />
+              <span className="font-medium">{userCredits} credits</span>
             </div>
             <Button asChild>
               <Link to="/create-campaign">
@@ -107,84 +174,74 @@ const MyCampaigns = () => {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8">
-        {userCampaigns.length === 0 ? (
+        {campaigns.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <h3 className="text-xl font-semibold mb-4">No Campaigns Yet</h3>
               <p className="text-muted-foreground mb-6">
-                You haven't created any campaigns yet. Start promoting your products or services!
+                Create your first advertising campaign to start promoting your business.
               </p>
               <Button asChild>
                 <Link to="/create-campaign">
                   <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Campaign
+                  Create First Campaign
                 </Link>
               </Button>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-6">
-            <div className="grid gap-6">
-              {userCampaigns.map((campaign) => (
-                <Card key={campaign.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-xl">{campaign.campaignName}</CardTitle>
-                        <p className="text-muted-foreground text-sm mt-1">
-                          Created on {new Date(campaign.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <Badge className={getStatusColor(campaign.status)}>
-                        {formatStatus(campaign.status)}
-                      </Badge>
+            {campaigns.map((campaign) => (
+              <Card key={campaign.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-xl">{campaign.campaign_name}</CardTitle>
+                      <p className="text-muted-foreground text-sm mt-1">
+                        Created on {new Date(campaign.created_at).toLocaleDateString()}
+                      </p>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-muted-foreground">Total Budget</p>
-                        <p className="text-lg font-semibold">{campaign.totalBudgetCredits} credits</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-muted-foreground">Remaining Budget</p>
-                        <p className="text-lg font-semibold">{campaign.remainingBudgetCredits} credits</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-muted-foreground">Views Completed</p>
-                        <p className="text-lg font-semibold">
-                          {Math.floor((campaign.totalBudgetCredits - campaign.remainingBudgetCredits) / 5)}
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-muted-foreground">Progress</p>
-                        <div className="w-full bg-muted rounded-full h-2">
-                          <div 
-                            className="bg-primary h-2 rounded-full" 
-                            style={{ 
-                              width: `${((campaign.totalBudgetCredits - campaign.remainingBudgetCredits) / campaign.totalBudgetCredits) * 100}%` 
-                            }}
-                          ></div>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {Math.round(((campaign.totalBudgetCredits - campaign.remainingBudgetCredits) / campaign.totalBudgetCredits) * 100)}% complete
-                        </p>
-                      </div>
+                    {getStatusBadge(campaign.status)}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Total Budget</p>
+                      <p className="text-lg font-semibold">{campaign.total_budget_credits} credits</p>
                     </div>
-                    <div className="flex justify-end">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Remaining Budget</p>
+                      <p className="text-lg font-semibold">{campaign.remaining_budget_credits} credits</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Estimated Views</p>
+                      <p className="text-lg font-semibold">
+                        {Math.floor(campaign.total_budget_credits / 5)} total
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    {campaign.status === 'pending_approval' && (
                       <Button 
                         variant="destructive" 
                         size="sm"
                         onClick={() => handleDeleteCampaign(campaign.id)}
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Campaign
+                        Cancel & Refund
                       </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    )}
+                    {campaign.status === 'active' && (
+                      <Button variant="outline" size="sm">
+                        View Stats
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
       </main>

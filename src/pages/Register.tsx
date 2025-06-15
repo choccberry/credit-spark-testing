@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/SupabaseAuthProvider';
 import { useToast } from '@/hooks/use-toast';
 
 const Register = () => {
@@ -13,7 +13,7 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { authState, register } = useAuth();
+  const { authState, signUp } = useAuth();
   const { toast } = useToast();
 
   if (authState.isAuthenticated) {
@@ -35,16 +35,11 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      const success = await register(username, email, password);
-      if (success) {
-        toast({
-          title: 'Welcome!',
-          description: 'Your account has been created with 100 bonus credits!',
-        });
-      } else {
+      const { error } = await signUp(email, password, username, username);
+      if (error) {
         toast({
           title: 'Registration failed',
-          description: 'Username or email already exists.',
+          description: error.message,
           variant: 'destructive',
         });
       }

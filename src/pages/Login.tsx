@@ -4,14 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/SupabaseAuthProvider';
 import { useToast } from '@/hooks/use-toast';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { authState, login } = useAuth();
+  const { authState, signIn } = useAuth();
   const { toast } = useToast();
 
   if (authState.isAuthenticated) {
@@ -23,17 +23,17 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const success = await login(username, password);
-      if (success) {
+      const { error } = await signIn(username, password);
+      if (error) {
         toast({
-          title: 'Welcome back!',
-          description: 'You have successfully logged in.',
+          title: 'Login failed',
+          description: error.message,
+          variant: 'destructive',
         });
       } else {
         toast({
-          title: 'Login failed',
-          description: 'Invalid username or password.',
-          variant: 'destructive',
+          title: 'Welcome back!',
+          description: 'You have successfully logged in.',
         });
       }
     } finally {
@@ -50,10 +50,10 @@ const Login = () => {
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="username"
-                type="text"
+                id="email"
+                type="email"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -68,9 +68,6 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-            </div>
-            <div className="text-sm text-muted-foreground">
-              Demo credentials: Try "john_doe" / "password123" or "jane_smith" / "password123"
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">

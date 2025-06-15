@@ -1,16 +1,50 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/SupabaseAuthProvider';
+import { supabase } from '@/integrations/supabase/client';
 import { Eye, Plus, List, LogOut, Coins, Shield, MessageCircle } from 'lucide-react';
 
 const Dashboard = () => {
   const { authState, signOut } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checkingAdmin, setCheckingAdmin] = useState(true);
 
   if (!authState.isAuthenticated) {
     return <Navigate to="/auth" replace />;
   }
+
+  useEffect(() => {
+    const checkAdminRole = async () => {
+      if (!authState.user) {
+        setCheckingAdmin(false);
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabase.rpc('has_role', {
+          _user_id: authState.user.id,
+          _role: 'admin'
+        });
+
+        if (error) {
+          console.error('Error checking admin role:', error);
+          setIsAdmin(false);
+        } else {
+          setIsAdmin(data || false);
+        }
+      } catch (error) {
+        console.error('Error checking admin role:', error);
+        setIsAdmin(false);
+      } finally {
+        setCheckingAdmin(false);
+      }
+    };
+
+    checkAdminRole();
+  }, [authState.user]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -107,7 +141,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {authState.profile?.id === '1' && (
+          {!checkingAdmin && isAdmin && (
             <Card className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

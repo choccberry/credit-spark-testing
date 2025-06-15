@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,13 @@ interface Campaign {
   created_at: string;
 }
 
+interface Ad {
+  id: string;
+  campaign_id: string;
+  ad_creative_path: string;
+  target_url: string;
+}
+
 interface Profile {
   id: string;
   user_id: string;
@@ -26,10 +34,14 @@ interface Profile {
   credits: number;
 }
 
+interface CampaignWithAd extends Campaign {
+  ads?: Ad[];
+}
+
 const AdminPanel = () => {
   const { authState } = useAuth();
   const { toast } = useToast();
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [campaigns, setCampaigns] = useState<CampaignWithAd[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -94,17 +106,27 @@ const AdminPanel = () => {
 
   const fetchCampaigns = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch campaigns with their associated ads
+      const { data: campaignsData, error: campaignsError } = await supabase
         .from('campaigns')
-        .select('*')
+        .select(`
+          *,
+          ads (
+            id,
+            campaign_id,
+            ad_creative_path,
+            target_url
+          )
+        `)
         .eq('status', 'pending_approval');
 
-      if (error) {
-        console.error('Error fetching campaigns:', error);
+      if (campaignsError) {
+        console.error('Error fetching campaigns:', campaignsError);
         return;
       }
 
-      setCampaigns(data || []);
+      console.log('Fetched campaigns with ads:', campaignsData);
+      setCampaigns(campaignsData || []);
     } catch (error) {
       console.error('Error fetching campaigns:', error);
     } finally {
@@ -301,6 +323,8 @@ const AdminPanel = () => {
           <div className="space-y-6">
             {campaigns.map((campaign) => {
               const owner = getCampaignOwner(campaign.user_id);
+              const campaignAd = campaign.ads && campaign.ads.length > 0 ? campaign.ads[0] : null;
+              
               return (
                 <Card key={campaign.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
@@ -308,7 +332,7 @@ const AdminPanel = () => {
                       <div>
                         <CardTitle className="text-xl">{campaign.campaign_name}</CardTitle>
                         <p className="text-muted-foreground text-sm mt-1">
-                          By {owner?.username} • Created on {new Date(campaign.created_at).toLocaleDateString()}
+                          By {owner?.username || owner?.email} • Created on {new Date(campaign.created_at).toLocaleDateString()}
                         </p>
                       </div>
                       <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100">
@@ -330,20 +354,36 @@ const AdminPanel = () => {
                       </div>
                       <div className="space-y-1">
                         <p className="text-sm font-medium text-muted-foreground">Advertiser</p>
-                        <p className="text-lg font-semibold">{owner?.username}</p>
+                        <p className="text-lg font-semibold">{owner?.username || 'Unknown User'}</p>
                         <p className="text-sm text-muted-foreground">{owner?.email}</p>
                       </div>
                     </div>
 
                     <div className="mb-6">
                       <p className="text-sm font-medium text-muted-foreground mb-2">Ad Preview</p>
-                      <div className="aspect-video bg-muted rounded-lg flex items-center justify-center max-w-md">
-                        <img 
-                          src={`https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=300&fit=crop&crop=center`}
-                          alt="Ad Preview"
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      </div>
+                      {campaignAd && campaignAd.ad_creative_path ? (
+                        <div className="space-y-2">
+                          <div className="aspect-video bg-muted rounded-lg flex items-center justify-center max-w-md overflow-hidden">
+                            <img 
+                              src={campaignAd.ad_creative_path}
+                              alt="Ad Creative"
+                              className="w-full h-full object-cover rounded-lg"
+                              onError={(e) => {
+                                console.error('Error loading ad image:', campaignAd.ad_creative_path);
+                                // Fallback to placeholder if image fails to load
+                                e.currentTarget.src = `https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=300&fit=crop&crop=center`;
+                              }}
+                            />
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Target URL: <a href={campaignAd.target_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{campaignAd.target_url}</a>
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="aspect-video bg-muted rounded-lg flex items-center justify-center max-w-md">
+                          <p className="text-muted-foreground">No ad creative uploaded</p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex gap-4">

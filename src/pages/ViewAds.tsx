@@ -3,7 +3,7 @@ import AdSenseAd from '@/components/AdSenseAd';
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/SupabaseAuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { getAdsWithCampaigns, mockCampaigns } from '@/data/mockData';
 import { Ad, Campaign } from '@/types';
@@ -23,7 +23,7 @@ const ViewAds = () => {
   const [showAdSense, setShowAdSense] = useState(false);
 
   if (!authState.isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
   const loadRandomAd = () => {
@@ -32,7 +32,7 @@ const ViewAds = () => {
       return ad.campaign && 
              ad.campaign.status === 'active' && 
              ad.campaign.remainingBudgetCredits > 0 &&
-             ad.campaign.userId !== authState.user?.id;
+             ad.campaign.userId.toString() !== authState.profile?.user_id;
     });
 
     if (availableAds.length === 0) {
@@ -71,7 +71,7 @@ const ViewAds = () => {
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Update user credits
-      const newBalance = authState.user.creditBalance + 5;
+      const newBalance = (authState.profile?.credits || 0) + 5;
       updateCredits(newBalance);
 
       // Update campaign budget
@@ -134,7 +134,7 @@ const ViewAds = () => {
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Coins className="h-4 w-4 text-yellow-500" />
-            <span className="font-medium">{authState.user?.creditBalance} Credits</span>
+            <span className="font-medium">{authState.profile?.credits || 0} Credits</span>
           </div>
         </div>
       </header>

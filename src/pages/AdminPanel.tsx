@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/SupabaseAuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Check, X, Shield, Settings, BookOpen, Globe } from 'lucide-react';
+import { ArrowLeft, Check, X, Shield, Settings, BookOpen, Globe, Users } from 'lucide-react';
 
 interface Campaign {
   id: string;
@@ -32,18 +32,65 @@ const AdminPanel = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   if (!authState.isAuthenticated) {
     return <Navigate to="/auth" replace />;
   }
 
-  // For now, allow any authenticated user to access admin panel
-  // In production, you'd check for admin role in the profile
-  
   useEffect(() => {
-    fetchCampaigns();
-    fetchProfiles();
-  }, []);
+    if (authState.user) {
+      checkAdminRole();
+    }
+  }, [authState.user]);
+
+  const checkAdminRole = async () => {
+    if (!authState.user) return;
+    
+    try {
+      const { data, error } = await supabase.rpc('has_role', {
+        _user_id: authState.user.id,
+        _role: 'admin'
+      });
+
+      if (error) {
+        console.error('Error checking admin role:', error);
+        setIsAdmin(false);
+        return;
+      }
+
+      setIsAdmin(data || false);
+      
+      if (data) {
+        fetchCampaigns();
+        fetchProfiles();
+      }
+    } catch (error) {
+      console.error('Error checking admin role:', error);
+      setIsAdmin(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isAdmin && !loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md">
+          <CardContent className="text-center py-12">
+            <Shield className="h-16 w-16 mx-auto mb-4 text-destructive" />
+            <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
+            <p className="text-muted-foreground mb-6">
+              You don't have admin privileges to access this panel.
+            </p>
+            <Button asChild>
+              <Link to="/dashboard">Return to Dashboard</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const fetchCampaigns = async () => {
     try {
@@ -194,6 +241,12 @@ const AdminPanel = () => {
       <header className="border-b border-border bg-card">
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
+            <Button variant="outline" asChild>
+              <Link to="/admin/users">
+                <Users className="h-4 w-4 mr-2" />
+                User Management
+              </Link>
+            </Button>
             <Button variant="outline" asChild>
               <Link to="/admin/blog">
                 <BookOpen className="h-4 w-4 mr-2" />

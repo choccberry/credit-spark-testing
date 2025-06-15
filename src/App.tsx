@@ -12,6 +12,7 @@ import ViewAds from "./pages/ViewAds";
 import CreateCampaign from "./pages/CreateCampaign";
 import MyCampaigns from "./pages/MyCampaigns";
 import AdminPanel from "./pages/AdminPanel";
+import UserManagement from "./pages/UserManagement";
 import AdSenseSettings from "./pages/AdSenseSettings";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/admin/adsense" element={<AdSenseSettings />} />
             <Route path="/admin/blog" element={<BlogManagement />} />
             <Route path="/admin/pages" element={<PageManagement />} />
+            <Route path="/admin/users" element={<UserManagement />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />

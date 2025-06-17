@@ -1,6 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/SupabaseAuthProvider';
 
 interface Campaign {
   id: string;
@@ -32,18 +32,21 @@ interface CampaignWithAd extends Campaign {
 }
 
 export const useAdminData = (isAdmin: boolean) => {
+  const { authState } = useAuth();
   const [campaigns, setCampaigns] = useState<CampaignWithAd[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isAdmin) {
+    if (isAdmin && authState.profile?.country_id) {
       fetchCampaigns();
       fetchProfiles();
     }
-  }, [isAdmin]);
+  }, [isAdmin, authState.profile?.country_id]);
 
   const fetchCampaigns = async () => {
+    if (!authState.profile?.country_id) return;
+
     try {
       const { data: campaignsData, error: campaignsError } = await supabase
         .from('campaigns')
@@ -56,14 +59,15 @@ export const useAdminData = (isAdmin: boolean) => {
             target_url
           )
         `)
-        .eq('status', 'pending_approval');
+        .eq('status', 'pending_approval')
+        .eq('country_id', authState.profile.country_id);
 
       if (campaignsError) {
         console.error('Error fetching campaigns:', campaignsError);
         return;
       }
 
-      console.log('Fetched campaigns with ads:', campaignsData);
+      console.log('Fetched campaigns with ads for country:', campaignsData);
       setCampaigns(campaignsData || []);
     } catch (error) {
       console.error('Error fetching campaigns:', error);
@@ -73,10 +77,13 @@ export const useAdminData = (isAdmin: boolean) => {
   };
 
   const fetchProfiles = async () => {
+    if (!authState.profile?.country_id) return;
+
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*');
+        .select('*')
+        .eq('country_id', authState.profile.country_id);
 
       if (error) {
         console.error('Error fetching profiles:', error);

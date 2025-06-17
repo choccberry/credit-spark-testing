@@ -5,19 +5,27 @@ import { useAuth } from '@/contexts/SupabaseAuthProvider';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { useAdminData } from '@/hooks/useAdminData';
 import { useCampaignActions } from '@/hooks/useCampaignActions';
+import { useCountryData } from '@/hooks/useCountryData';
 import AdminHeader from '@/components/admin/AdminHeader';
 import AccessDeniedCard from '@/components/admin/AccessDeniedCard';
 import CampaignCard from '@/components/admin/CampaignCard';
 import EmptyState from '@/components/admin/EmptyState';
+import GlobalHeader from '@/components/GlobalHeader';
 
 const AdminPanel = () => {
   const { authState } = useAuth();
+  const { userCountry } = useCountryData();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
   const { campaigns, setCampaigns, loading: dataLoading, getCampaignOwner } = useAdminData(isAdmin);
   const { handleApprove, handleReject } = useCampaignActions(campaigns, setCampaigns);
 
   if (!authState.isAuthenticated) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Redirect to dashboard if no country selected
+  if (!userCountry) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   if (!isAdmin && !adminLoading) {
@@ -37,13 +45,14 @@ const AdminPanel = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <GlobalHeader />
       <AdminHeader />
 
       <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Campaign Approval</h2>
+          <h2 className="text-3xl font-bold mb-2">Campaign Approval - {userCountry.name}</h2>
           <p className="text-muted-foreground">
-            Review and approve pending ad campaigns.
+            Review and approve pending ad campaigns for {userCountry.name}.
           </p>
         </div>
 

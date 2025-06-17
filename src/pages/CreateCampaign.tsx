@@ -9,10 +9,13 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/SupabaseAuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useCountryData } from '@/hooks/useCountryData';
+import GlobalHeader from '@/components/GlobalHeader';
 import { ArrowLeft, Upload, Coins } from 'lucide-react';
 
 const CreateCampaign = () => {
   const { authState, updateCredits } = useAuth();
+  const { userCountry } = useCountryData();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [campaignName, setCampaignName] = useState('');
@@ -24,6 +27,11 @@ const CreateCampaign = () => {
 
   if (!authState.isAuthenticated) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Redirect to dashboard if no country selected
+  if (!userCountry) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,10 +47,10 @@ const CreateCampaign = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!authState.user || !authState.profile) {
+    if (!authState.user || !authState.profile || !userCountry) {
       toast({
         title: 'Error',
-        description: 'User not authenticated.',
+        description: 'User not authenticated or country not selected.',
         variant: 'destructive',
       });
       return;
@@ -60,7 +68,7 @@ const CreateCampaign = () => {
     setIsLoading(true);
 
     try {
-      // Create campaign in database
+      // Create campaign in database with country_id
       const { data: campaign, error: campaignError } = await supabase
         .from('campaigns')
         .insert({
@@ -68,7 +76,8 @@ const CreateCampaign = () => {
           campaign_name: campaignName,
           total_budget_credits: budget,
           remaining_budget_credits: budget,
-          status: 'pending_approval'
+          status: 'pending_approval',
+          country_id: userCountry.id
         })
         .select()
         .single();
@@ -122,7 +131,7 @@ const CreateCampaign = () => {
 
       toast({
         title: 'Campaign created successfully!',
-        description: `Your campaign "${campaignName}" has been submitted for approval.`,
+        description: `Your campaign "${campaignName}" has been submitted for approval in ${userCountry.name}.`,
       });
 
       navigate('/my-campaigns');
@@ -140,6 +149,8 @@ const CreateCampaign = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <GlobalHeader />
+      
       <header className="border-b border-border bg-card">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">

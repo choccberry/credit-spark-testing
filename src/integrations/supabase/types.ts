@@ -44,6 +44,7 @@ export type Database = {
       campaigns: {
         Row: {
           campaign_name: string
+          country_id: string | null
           created_at: string
           id: string
           latitude: number | null
@@ -57,6 +58,7 @@ export type Database = {
         }
         Insert: {
           campaign_name: string
+          country_id?: string | null
           created_at?: string
           id?: string
           latitude?: number | null
@@ -70,6 +72,7 @@ export type Database = {
         }
         Update: {
           campaign_name?: string
+          country_id?: string | null
           created_at?: string
           id?: string
           latitude?: number | null
@@ -81,7 +84,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       conversations: {
         Row: {
@@ -103,6 +114,36 @@ export type Database = {
           id?: string
           participant_1?: string
           participant_2?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      countries: {
+        Row: {
+          code: string
+          created_at: string
+          currency: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          currency?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          is_active?: boolean
+          name?: string
           updated_at?: string
         }
         Relationships: []
@@ -167,6 +208,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          country_id: string | null
           created_at: string
           credits: number | null
           display_name: string | null
@@ -180,6 +222,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          country_id?: string | null
           created_at?: string
           credits?: number | null
           display_name?: string | null
@@ -193,6 +236,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          country_id?: string | null
           created_at?: string
           credits?: number | null
           display_name?: string | null
@@ -203,7 +247,15 @@ export type Database = {
           user_id?: string
           username?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

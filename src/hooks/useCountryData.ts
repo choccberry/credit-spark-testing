@@ -2,14 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/SupabaseAuthProvider';
-
-interface Country {
-  id: string;
-  name: string;
-  code: string;
-  currency: string;
-  is_active: boolean;
-}
+import { Country } from '@/types/profile';
 
 export const useCountryData = () => {
   const { authState } = useAuth();

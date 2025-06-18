@@ -1,6 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/SupabaseAuthProvider';
+import { Profile } from '@/types/profile';
 
 interface Campaign {
   id: string;
@@ -17,14 +19,6 @@ interface Ad {
   campaign_id: string;
   ad_creative_path: string;
   target_url: string;
-}
-
-interface Profile {
-  id: string;
-  user_id: string;
-  username?: string;
-  email?: string;
-  credits: number;
 }
 
 interface CampaignWithAd extends Campaign {

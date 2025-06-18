@@ -1,16 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/SupabaseAuthProvider';
 import { useToast } from '@/hooks/use-toast';
-
-interface Country {
-  id: string;
-  name: string;
-  code: string;
-  currency: string;
-}
+import { Country } from '@/types/profile';
 
 interface CountrySelectorProps {
   onCountryChange?: (country: Country | null) => void;

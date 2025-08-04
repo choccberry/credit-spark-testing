@@ -13,6 +13,8 @@ interface AuthState {
 
 interface AuthContextType {
   authState: AuthState;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string, username?: string, displayName?: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   updateProfile: (profile: Profile) => void;
   updateCredits: (newCredits: number) => Promise<void>;
@@ -43,7 +45,7 @@ export const SupabaseAuthProvider = ({ children }: SupabaseAuthProviderProps) =>
 
   useEffect(() => {
     supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'REAUTHENTICATE') {
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
         setAuthState((prevState) => ({
           ...prevState,
           user: session?.user || null,
@@ -119,6 +121,34 @@ export const SupabaseAuthProvider = ({ children }: SupabaseAuthProviderProps) =>
     }
   };
 
+  const signIn = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      return { error };
+    } catch (error) {
+      return { error: error as AuthError };
+    }
+  };
+
+  const signUp = async (email: string, password: string, username?: string, displayName?: string) => {
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            username: username || '',
+            display_name: displayName || '',
+          }
+        }
+      });
+      return { error };
+    } catch (error) {
+      return { error: error as AuthError };
+    }
+  };
+
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -159,6 +189,8 @@ export const SupabaseAuthProvider = ({ children }: SupabaseAuthProviderProps) =>
 
   const value: AuthContextType = {
     authState,
+    signIn,
+    signUp,
     signOut,
     updateProfile,
     updateCredits,

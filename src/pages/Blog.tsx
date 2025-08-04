@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, User, Clock, ArrowRight } from 'lucide-react';
+import { Calendar, User, Clock, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Article } from '@/types';
 
 const Blog = () => {
@@ -28,6 +28,14 @@ const Blog = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
         <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-6">
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/dashboard">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Dashboard
+              </Link>
+            </Button>
+          </div>
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-4">Publicdiscus Ad Exchange Blog</h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">

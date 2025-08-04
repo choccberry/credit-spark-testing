@@ -15,10 +15,6 @@ const Dashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
 
-  if (!authState.isAuthenticated) {
-    return <Navigate to="/auth" replace />;
-  }
-
   useEffect(() => {
     const checkAdminRole = async () => {
       if (!authState.user) {
@@ -48,6 +44,10 @@ const Dashboard = () => {
 
     checkAdminRole();
   }, [authState.user]);
+
+  if (!authState.isAuthenticated) {
+    return <Navigate to="/auth" replace />;
+  }
 
   // Show country selection if user hasn't selected a country yet
   if (!countryLoading && !userCountry) {

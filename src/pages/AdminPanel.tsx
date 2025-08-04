@@ -19,6 +19,17 @@ const AdminPanel = () => {
   const { campaigns, setCampaigns, loading: dataLoading, getCampaignOwner } = useAdminData(isAdmin);
   const { handleApprove, handleReject } = useCampaignActions(campaigns, setCampaigns);
 
+  // Debug logging
+  console.log('AdminPanel Debug:', {
+    isAuthenticated: authState.isAuthenticated,
+    userCountry: userCountry?.name,
+    isAdmin,
+    adminLoading,
+    dataLoading,
+    campaignsCount: campaigns.length,
+    userId: authState.user?.id
+  });
+
   if (!authState.isAuthenticated) {
     return <Navigate to="/auth" replace />;
   }

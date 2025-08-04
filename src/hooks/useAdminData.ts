@@ -32,9 +32,12 @@ export const useAdminData = (isAdmin: boolean) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('useAdminData effect:', { isAdmin, countryId: authState.profile?.country_id });
     if (isAdmin && authState.profile?.country_id) {
       fetchCampaigns();
       fetchProfiles();
+    } else {
+      setLoading(false); // Important: set loading to false even when conditions aren't met
     }
   }, [isAdmin, authState.profile?.country_id]);
 

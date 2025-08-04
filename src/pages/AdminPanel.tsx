@@ -14,7 +14,7 @@ import GlobalHeader from '@/components/GlobalHeader';
 
 const AdminPanel = () => {
   const { authState } = useAuth();
-  const { userCountry } = useCountryData();
+  const { userCountry, loading: countryLoading } = useCountryData();
   const { isAdmin, loading: adminLoading } = useAdminCheck();
   const { campaigns, setCampaigns, loading: dataLoading, getCampaignOwner } = useAdminData(isAdmin);
   const { handleApprove, handleReject } = useCampaignActions(campaigns, setCampaigns);
@@ -23,15 +23,29 @@ const AdminPanel = () => {
   console.log('AdminPanel Debug:', {
     isAuthenticated: authState.isAuthenticated,
     userCountry: userCountry?.name,
+    countryLoading,
     isAdmin,
     adminLoading,
     dataLoading,
     campaignsCount: campaigns.length,
-    userId: authState.user?.id
+    userId: authState.user?.id,
+    profileCountryId: authState.profile?.country_id
   });
 
   if (!authState.isAuthenticated) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Wait for country data to load before checking if country is selected
+  if (countryLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   // Redirect to dashboard if no country selected

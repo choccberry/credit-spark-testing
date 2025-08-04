@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_views: {
+        Row: {
+          ad_id: string
+          campaign_id: string
+          created_at: string
+          credits_earned: number
+          id: string
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          ad_id: string
+          campaign_id: string
+          created_at?: string
+          credits_earned?: number
+          id?: string
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          ad_id?: string
+          campaign_id?: string
+          created_at?: string
+          credits_earned?: number
+          id?: string
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: []
+      }
       ads: {
         Row: {
           ad_creative_path: string
@@ -288,6 +318,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_view_ad: {
+        Args: { _user_id: string; _ad_id: string }
+        Returns: boolean
+      }
+      can_view_campaign_ad: {
+        Args: { _user_id: string; _campaign_id: string }
+        Returns: boolean
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

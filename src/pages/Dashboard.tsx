@@ -32,6 +32,7 @@ const Dashboard = () => {
           console.error('Error checking admin role:', error);
           setIsAdmin(false);
         } else {
+          console.log('Admin check result:', data, 'for user:', authState.user.id);
           setIsAdmin(data || false);
         }
       } catch (error) {
@@ -108,6 +109,10 @@ const Dashboard = () => {
           <p className="text-muted-foreground">
             Manage your ad campaigns and earn credits by viewing ads in {userCountry?.name}.
           </p>
+          {/* Debug info */}
+          <div className="mt-2 text-xs text-muted-foreground">
+            Admin status: {checkingAdmin ? 'Checking...' : isAdmin ? 'Admin' : 'Not Admin'} | User ID: {authState.user?.id}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

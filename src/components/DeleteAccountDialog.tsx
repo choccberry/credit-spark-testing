@@ -39,14 +39,11 @@ const DeleteAccountDialog = () => {
     setIsDeleting(true);
 
     try {
-      // Delete user profile and related data will cascade
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('user_id', authState.user.id);
+      // Call the database function to delete the user account completely
+      const { error: deleteError } = await supabase.rpc('delete_user_account');
 
-      if (profileError) {
-        console.error('Error deleting profile:', profileError);
+      if (deleteError) {
+        console.error('Error deleting account:', deleteError);
         toast({
           title: "Error",
           description: "Failed to delete account. Please try again.",
@@ -54,9 +51,6 @@ const DeleteAccountDialog = () => {
         });
         return;
       }
-
-      // Sign out the user
-      await signOut();
 
       toast({
         title: "Account Deleted",

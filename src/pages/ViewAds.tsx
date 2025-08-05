@@ -230,12 +230,12 @@ const ViewAds = () => {
         });
       }
 
-      // Load next ad after delay
-      setTimeout(() => {
-        if (newAdsViewed % 30 !== 0) {
-          loadRandomAd();
-        }
-      }, 1000);
+      // Show cooldown message instead of loading new ad
+      // User must wait 72 hours before viewing more ads from campaigns
+      const now = new Date();
+      const cooldownEnd = new Date(now.getTime() + (72 * 60 * 60 * 1000)); // 72 hours from now
+      setCooldownEnd(cooldownEnd);
+      setCurrentAd(null);
 
     } catch (error) {
       console.error('Error claiming credits:', error);

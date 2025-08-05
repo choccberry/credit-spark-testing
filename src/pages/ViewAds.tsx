@@ -5,14 +5,33 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/SupabaseAuthProvider';
 import { useToast } from '@/hooks/use-toast';
-import { getAdsWithCampaigns, mockCampaigns } from '@/data/mockData';
-import { Ad, Campaign } from '@/types';
-import { ArrowLeft, ExternalLink, Coins } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { ArrowLeft, ExternalLink, Coins, Clock } from 'lucide-react';
+
+interface Ad {
+  id: string;
+  campaign_id: string;
+  ad_creative_path: string;
+  target_url: string;
+}
+
+interface Campaign {
+  id: string;
+  campaign_name: string;
+  user_id: string;
+  total_budget_credits: number;
+  remaining_budget_credits: number;
+  status: string;
+}
+
+interface AdWithCampaign extends Ad {
+  campaign?: Campaign;
+}
 
 const ViewAds = () => {
   const { authState, updateCredits } = useAuth();
   const { toast } = useToast();
-  const [currentAd, setCurrentAd] = useState<(Ad & { campaign?: Campaign }) | null>(null);
+  const [currentAd, setCurrentAd] = useState<AdWithCampaign | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(30);
   const [canClaim, setCanClaim] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -21,34 +40,103 @@ const ViewAds = () => {
     return saved ? parseInt(saved) : 0;
   });
   const [showAdSense, setShowAdSense] = useState(false);
+  const [cooldownEnd, setCooldownEnd] = useState<Date | null>(null);
 
   if (!authState.isAuthenticated) {
     return <Navigate to="/auth" replace />;
   }
 
-  const loadRandomAd = () => {
-    const adsWithCampaigns = getAdsWithCampaigns();
-    const availableAds = adsWithCampaigns.filter(ad => {
-      return ad.campaign && 
-             ad.campaign.status === 'active' && 
-             ad.campaign.remainingBudgetCredits > 0 &&
-             ad.campaign.userId.toString() !== authState.profile?.user_id;
-    });
+  const loadRandomAd = async () => {
+    if (!authState.user) return;
 
-    if (availableAds.length === 0) {
+    try {
+      // Get active campaigns with ads that user hasn't viewed in last 72 hours
+      const { data: adsWithCampaigns, error } = await supabase
+        .from('campaigns')
+        .select(`
+          id,
+          campaign_name,
+          user_id,
+          total_budget_credits,
+          remaining_budget_credits,
+          status,
+          ads (
+            id,
+            campaign_id,
+            ad_creative_path,
+            target_url
+          )
+        `)
+        .eq('status', 'active')
+        .gt('remaining_budget_credits', 0)
+        .neq('user_id', authState.user.id);
+
+      if (error) {
+        console.error('Error fetching ads:', error);
+        setCurrentAd(null);
+        return;
+      }
+
+      if (!adsWithCampaigns || adsWithCampaigns.length === 0) {
+        setCurrentAd(null);
+        return;
+      }
+
+      // Flatten campaigns to ads and filter out campaigns user viewed recently
+      const availableAds: AdWithCampaign[] = [];
+      
+      for (const campaign of adsWithCampaigns) {
+        if (campaign.ads && campaign.ads.length > 0) {
+          // Check if user can view ads from this campaign (72-hour cooldown)
+          const { data: canView } = await supabase.rpc('can_view_campaign_ad', {
+            _user_id: authState.user.id,
+            _campaign_id: campaign.id
+          });
+
+          if (canView) {
+            campaign.ads.forEach(ad => {
+              availableAds.push({
+                ...ad,
+                campaign: campaign
+              });
+            });
+          }
+        }
+      }
+
+      if (availableAds.length === 0) {
+        // Check when user can view ads again
+        const { data: recentViews } = await supabase
+          .from('ad_views')
+          .select('viewed_at')
+          .eq('user_id', authState.user.id)
+          .order('viewed_at', { ascending: false })
+          .limit(1);
+
+        if (recentViews && recentViews.length > 0) {
+          const lastView = new Date(recentViews[0].viewed_at);
+          const cooldownEnd = new Date(lastView.getTime() + (72 * 60 * 60 * 1000)); // 72 hours
+          setCooldownEnd(cooldownEnd);
+        }
+
+        setCurrentAd(null);
+        return;
+      }
+
+      const randomIndex = Math.floor(Math.random() * availableAds.length);
+      setCurrentAd(availableAds[randomIndex]);
+      setTimeRemaining(30);
+      setCanClaim(false);
+      setCooldownEnd(null);
+    } catch (error) {
+      console.error('Error loading ads:', error);
       setCurrentAd(null);
-      return;
     }
-
-    const randomIndex = Math.floor(Math.random() * availableAds.length);
-    setCurrentAd(availableAds[randomIndex]);
-    setTimeRemaining(30);
-    setCanClaim(false);
   };
 
   useEffect(() => {
     loadRandomAd();
-  }, []);
+  }, [authState.user]);
 
   useEffect(() => {
     if (timeRemaining > 0 && currentAd) {
@@ -67,21 +155,61 @@ const ViewAds = () => {
     setIsLoading(true);
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Record the ad view in database
+      const { error: viewError } = await supabase
+        .from('ad_views')
+        .insert({
+          user_id: authState.user.id,
+          ad_id: currentAd.id,
+          campaign_id: currentAd.campaign_id,
+          credits_earned: 5
+        });
 
-      // Update user credits
+      if (viewError) {
+        console.error('Error recording ad view:', viewError);
+        toast({
+          title: 'Error',
+          description: 'Failed to record ad view. Please try again.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Update user credits in database
       const newBalance = (authState.profile?.credits || 0) + 5;
-      updateCredits(newBalance);
+      const { error: creditsError } = await supabase
+        .from('profiles')
+        .update({ credits: newBalance })
+        .eq('user_id', authState.user.id);
+
+      if (creditsError) {
+        console.error('Error updating credits:', creditsError);
+        toast({
+          title: 'Error',
+          description: 'Failed to update credits. Please try again.',
+          variant: 'destructive'
+        });
+        return;
+      }
 
       // Update campaign budget
-      const campaignIndex = mockCampaigns.findIndex(c => c.id === currentAd.campaignId);
-      if (campaignIndex !== -1) {
-        mockCampaigns[campaignIndex].remainingBudgetCredits -= 5;
-        if (mockCampaigns[campaignIndex].remainingBudgetCredits <= 0) {
-          mockCampaigns[campaignIndex].status = 'completed';
-        }
+      const newBudget = (currentAd.campaign?.remaining_budget_credits || 0) - 5;
+      const newStatus = newBudget <= 0 ? 'completed' : 'active';
+      
+      const { error: campaignError } = await supabase
+        .from('campaigns')
+        .update({ 
+          remaining_budget_credits: newBudget,
+          status: newStatus
+        })
+        .eq('id', currentAd.campaign_id);
+
+      if (campaignError) {
+        console.error('Error updating campaign:', campaignError);
       }
+
+      // Update local state
+      updateCredits(newBalance);
 
       // Increment ads viewed counter
       const newAdsViewed = adsViewed + 1;
@@ -102,13 +230,20 @@ const ViewAds = () => {
         });
       }
 
-      // Load next ad
+      // Load next ad after delay
       setTimeout(() => {
         if (newAdsViewed % 30 !== 0) {
           loadRandomAd();
         }
       }, 1000);
 
+    } catch (error) {
+      console.error('Error claiming credits:', error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred. Please try again.',
+        variant: 'destructive'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -117,6 +252,18 @@ const ViewAds = () => {
   const handleCloseAdSense = () => {
     setShowAdSense(false);
     loadRandomAd();
+  };
+
+  const formatTimeRemaining = (endTime: Date) => {
+    const now = new Date();
+    const diff = endTime.getTime() - now.getTime();
+    
+    if (diff <= 0) return 'Available now';
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return `${hours}h ${minutes}m`;
   };
 
   return (
@@ -142,21 +289,25 @@ const ViewAds = () => {
       <main className="max-w-4xl mx-auto px-4 py-8">
         {/* Platform AdSense Ad */}
         <AdSenseAd adType="viewAds" className="mb-8" />
+        
         {currentAd ? (
           <Card className="max-w-2xl mx-auto">
             <CardHeader>
               <CardTitle className="text-center">
-                {currentAd.campaign?.campaignName}
+                {currentAd.campaign?.campaign_name}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="relative">
                 <div className="aspect-video bg-muted rounded-lg flex items-center justify-center overflow-hidden">
                   <img 
-                    src={`https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=600&h=400&fit=crop&crop=center`}
+                    src={currentAd.ad_creative_path.startsWith('http') 
+                      ? currentAd.ad_creative_path 
+                      : `https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=600&h=400&fit=crop&crop=center`
+                    }
                     alt="Advertisement"
                     className="w-full h-full object-cover cursor-pointer"
-                    onClick={() => window.open(currentAd.targetUrl, '_blank')}
+                    onClick={() => window.open(currentAd.target_url, '_blank')}
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-all cursor-pointer flex items-center justify-center">
                     <ExternalLink className="text-white opacity-0 hover:opacity-100 transition-opacity h-8 w-8" />
@@ -205,10 +356,23 @@ const ViewAds = () => {
         ) : (
           <Card className="max-w-2xl mx-auto">
             <CardContent className="text-center py-12">
-              <h3 className="text-xl font-semibold mb-4">No Ads Available</h3>
-              <p className="text-muted-foreground mb-6">
-                There are currently no active ads available for viewing. Check back later!
-              </p>
+              {cooldownEnd ? (
+                <>
+                  <Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-xl font-semibold mb-4">Cooldown Period</h3>
+                  <p className="text-muted-foreground mb-6">
+                    You need to wait 72 hours between viewing ads from the same campaigns. 
+                    You can view new ads again in: <strong>{formatTimeRemaining(cooldownEnd)}</strong>
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-xl font-semibold mb-4">No Ads Available</h3>
+                  <p className="text-muted-foreground mb-6">
+                    There are currently no active ads available for viewing. Check back later!
+                  </p>
+                </>
+              )}
               <Button asChild>
                 <Link to="/dashboard">Return to Dashboard</Link>
               </Button>

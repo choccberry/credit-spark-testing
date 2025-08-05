@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/SupabaseAuthProvider';
 import { supabase } from '@/integrations/supabase/client';
 import GlobalHeader from '@/components/GlobalHeader';
 import CountrySelector from '@/components/CountrySelector';
+import DeleteAccountDialog from '@/components/DeleteAccountDialog';
 import { useCountryData } from '@/hooks/useCountryData';
 import { Eye, Plus, List, LogOut, Coins, Shield, MessageCircle, AlertCircle } from 'lucide-react';
 
@@ -95,10 +96,13 @@ const Dashboard = () => {
               <Coins className="h-4 w-4 text-yellow-500" />
               <span className="font-medium">{authState.profile?.credits || 0} Credits</span>
             </div>
-            <Button variant="outline" onClick={signOut} size="sm">
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
+            <div className="flex items-center gap-2">
+              <DeleteAccountDialog />
+              <Button variant="outline" onClick={signOut} size="sm">
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </header>

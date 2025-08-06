@@ -50,6 +50,19 @@ const ViewAds = () => {
     if (!authState.user) return;
 
     try {
+      // Get user's country ID
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('country_id')
+        .eq('user_id', authState.user.id)
+        .single();
+
+      if (!userProfile?.country_id) {
+        console.log('User has no country selected');
+        setCurrentAd(null);
+        return;
+      }
+
       // Get active campaigns with ads that user hasn't viewed in last 72 hours
       const { data: adsWithCampaigns, error } = await supabase
         .from('campaigns')
@@ -68,6 +81,7 @@ const ViewAds = () => {
           )
         `)
         .eq('status', 'active')
+        .eq('country_id', userProfile.country_id)
         .gt('remaining_budget_credits', 0)
         .neq('user_id', authState.user.id);
 
@@ -78,6 +92,7 @@ const ViewAds = () => {
       }
 
       if (!adsWithCampaigns || adsWithCampaigns.length === 0) {
+        console.log('No active campaigns found');
         setCurrentAd(null);
         return;
       }
@@ -105,6 +120,7 @@ const ViewAds = () => {
       }
 
       if (availableAds.length === 0) {
+        console.log('No available ads after cooldown check');
         // Check when user can view ads again
         const { data: recentViews } = await supabase
           .from('ad_views')
@@ -123,6 +139,7 @@ const ViewAds = () => {
         return;
       }
 
+      console.log(`Found ${availableAds.length} available ads`);
       const randomIndex = Math.floor(Math.random() * availableAds.length);
       setCurrentAd(availableAds[randomIndex]);
       setTimeRemaining(30);

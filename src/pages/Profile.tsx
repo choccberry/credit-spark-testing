@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/SupabaseAuthProvider';
 import { useCountryData } from '@/hooks/useCountryData';
 import GlobalHeader from '@/components/GlobalHeader';
 import DeleteAccountDialog from '@/components/DeleteAccountDialog';
+import ProfilePictureUpload from '@/components/ProfilePictureUpload';
 import { ArrowLeft, User, Mail, MapPin, Calendar, Globe, Store, Coins } from 'lucide-react';
 
 const Profile = () => {
@@ -105,6 +106,11 @@ const Profile = () => {
                     className="bg-muted"
                   />
                 </div>
+
+                <ProfilePictureUpload 
+                  currentAvatarUrl={profile?.avatar_url}
+                  size="lg"
+                />
               </CardContent>
             </Card>
 

@@ -44,6 +44,33 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_settings: {
+        Row: {
+          country_id: string | null
+          created_at: string
+          id: string
+          key: string
+          updated_at: string
+          value: Json | null
+        }
+        Insert: {
+          country_id?: string | null
+          created_at?: string
+          id?: string
+          key: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Update: {
+          country_id?: string | null
+          created_at?: string
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Relationships: []
+      }
       ads: {
         Row: {
           ad_creative_path: string

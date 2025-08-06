@@ -14,6 +14,7 @@ import MyCampaigns from "./pages/MyCampaigns";
 import AdminPanel from "./pages/AdminPanel";
 import UserManagement from "./pages/UserManagement";
 import AdSenseSettings from "./pages/AdSenseSettings";
+import AdminSettings from "./pages/AdminSettings";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import BlogManagement from "./pages/BlogManagement";
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/messages" element={<Messages />} />
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/admin/adsense" element={<AdSenseSettings />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="/admin/blog" element={<BlogManagement />} />
             <Route path="/admin/pages" element={<PageManagement />} />
             <Route path="/admin/users" element={<UserManagement />} />

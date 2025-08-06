@@ -28,9 +28,9 @@ const AdminHeader = () => {
             </Link>
           </Button>
           <Button variant="outline" asChild>
-            <Link to="/admin/adsense">
+            <Link to="/admin/settings">
               <Settings className="h-4 w-4 mr-2" />
-              AdSense Settings
+              Admin Settings
             </Link>
           </Button>
           <Button variant="outline" size="sm" asChild>

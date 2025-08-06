@@ -82,8 +82,7 @@ const ViewAds = () => {
         `)
         .eq('status', 'active')
         .eq('country_id', userProfile.country_id)
-        .gt('remaining_budget_credits', 0)
-        .neq('user_id', authState.user.id);
+        .gt('remaining_budget_credits', 0);
 
       if (error) {
         console.error('Error fetching ads:', error);

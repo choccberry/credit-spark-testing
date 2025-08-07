@@ -1,11 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/SupabaseAuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,6 +25,70 @@ const CreateCampaign = () => {
   const [budget, setBudget] = useState(50);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+  const [categories, setCategories] = useState<any[]>([]);
+  const [states, setStates] = useState<any[]>([]);
+  const [cities, setCities] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchCategories();
+    if (userCountry) {
+      fetchStates();
+    }
+  }, [userCountry]);
+
+  useEffect(() => {
+    if (selectedState) {
+      fetchCities();
+    } else {
+      setCities([]);
+      setSelectedCity('');
+    }
+  }, [selectedState]);
+
+  const fetchCategories = async () => {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('is_active', true)
+      .order('name');
+    
+    if (!error && data) {
+      setCategories(data);
+    }
+  };
+
+  const fetchStates = async () => {
+    if (!userCountry) return;
+    
+    const { data, error } = await supabase
+      .from('states')
+      .select('*')
+      .eq('country_id', userCountry.id)
+      .eq('is_active', true)
+      .order('name');
+    
+    if (!error && data) {
+      setStates(data);
+    }
+  };
+
+  const fetchCities = async () => {
+    if (!selectedState) return;
+    
+    const { data, error } = await supabase
+      .from('cities')
+      .select('*')
+      .eq('state_id', selectedState)
+      .eq('is_active', true)
+      .order('name');
+    
+    if (!error && data) {
+      setCities(data);
+    }
+  };
 
   if (!authState.isAuthenticated) {
     return <Navigate to="/auth" replace />;
@@ -77,7 +142,10 @@ const CreateCampaign = () => {
           total_budget_credits: budget,
           remaining_budget_credits: budget,
           status: 'pending_approval',
-          country_id: userCountry.id
+          country_id: userCountry.id,
+          category_id: selectedCategory || null,
+          state_id: selectedState || null,
+          city_id: selectedCity || null
         })
         .select()
         .single();
@@ -212,6 +280,56 @@ const CreateCampaign = () => {
                   placeholder="Describe your campaign..."
                   rows={3}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="category">Category</Label>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="state">State/Province (Optional)</Label>
+                  <Select value={selectedState} onValueChange={setSelectedState}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select state/province" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {states.map((state) => (
+                        <SelectItem key={state.id} value={state.id}>
+                          {state.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="city">City (Optional)</Label>
+                  <Select value={selectedCity} onValueChange={setSelectedCity} disabled={!selectedState}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select city" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cities.map((city) => (
+                        <SelectItem key={city.id} value={city.id}>
+                          {city.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="space-y-2">

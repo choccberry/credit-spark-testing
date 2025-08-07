@@ -106,6 +106,8 @@ export type Database = {
       campaigns: {
         Row: {
           campaign_name: string
+          category_id: string | null
+          city_id: string | null
           country_id: string | null
           created_at: string
           id: string
@@ -113,6 +115,7 @@ export type Database = {
           location: string | null
           longitude: number | null
           remaining_budget_credits: number
+          state_id: string | null
           status: string
           total_budget_credits: number
           updated_at: string
@@ -120,6 +123,8 @@ export type Database = {
         }
         Insert: {
           campaign_name: string
+          category_id?: string | null
+          city_id?: string | null
           country_id?: string | null
           created_at?: string
           id?: string
@@ -127,6 +132,7 @@ export type Database = {
           location?: string | null
           longitude?: number | null
           remaining_budget_credits: number
+          state_id?: string | null
           status?: string
           total_budget_credits: number
           updated_at?: string
@@ -134,6 +140,8 @@ export type Database = {
         }
         Update: {
           campaign_name?: string
+          category_id?: string | null
+          city_id?: string | null
           country_id?: string | null
           created_at?: string
           id?: string
@@ -141,6 +149,7 @@ export type Database = {
           location?: string | null
           longitude?: number | null
           remaining_budget_credits?: number
+          state_id?: string | null
           status?: string
           total_budget_credits?: number
           updated_at?: string
@@ -148,10 +157,109 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "campaigns_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "campaigns_country_id_fkey"
             columns: ["country_id"]
             isOneToOne: false
             referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_state_id_fkey"
+            columns: ["state_id"]
+            isOneToOne: false
+            referencedRelation: "states"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cities: {
+        Row: {
+          country_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          state_id: string
+          updated_at: string
+        }
+        Insert: {
+          country_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          state_id: string
+          updated_at?: string
+        }
+        Update: {
+          country_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          state_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cities_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cities_state_id_fkey"
+            columns: ["state_id"]
+            isOneToOne: false
+            referencedRelation: "states"
             referencedColumns: ["id"]
           },
         ]
@@ -312,6 +420,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "profiles_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      states: {
+        Row: {
+          code: string
+          country_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          country_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          country_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "states_country_id_fkey"
             columns: ["country_id"]
             isOneToOne: false
             referencedRelation: "countries"

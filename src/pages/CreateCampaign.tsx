@@ -16,7 +16,7 @@ import { ArrowLeft, Upload, Coins } from 'lucide-react';
 
 const CreateCampaign = () => {
   const { authState, updateCredits } = useAuth();
-  const { userCountry } = useCountryData();
+  const { userCountry, loading: countryLoading } = useCountryData();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [campaignName, setCampaignName] = useState('');
@@ -94,7 +94,19 @@ const CreateCampaign = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Redirect to dashboard if no country selected
+  // Wait for country to load to avoid false redirect
+  if (countryLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <GlobalHeader />
+        <main className="max-w-4xl mx-auto px-4 py-16">
+          <p className="text-muted-foreground">Loading your country settings...</p>
+        </main>
+      </div>
+    );
+  }
+
+  // Redirect to dashboard if no country selected after loading
   if (!userCountry) {
     return <Navigate to="/dashboard" replace />;
   }
